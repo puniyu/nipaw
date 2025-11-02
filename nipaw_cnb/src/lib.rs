@@ -167,38 +167,7 @@ impl Client for CnbClient {
 		}
 		let resp = request.send().await?;
 		let mut repo_info: JsonValue = resp.json().await?;
-		let is_public = repo_info
-			.0
-			.get("visibility_level")
-			.and_then(|v| v.as_str())
-			.map(|s| s.to_lowercase() == "public")
-			.unwrap_or(false);
-		let default_branch = if is_public {
-			let url = format!(
-				"{}/repos/{}/{}/-/git/overview-branches?limit=5",
-				BASE_URL, repo_path.0, repo_path.1
-			);
-			let request = HTTP_CLIENT.get(url).header("Accept", "application/vnd.cnb.web+json");
-			let resp = request.send().await?;
-			let repo_info: JsonValue = resp.json().await?;
-			repo_info
-				.0
-				.get("default_branch")
-				.and_then(|v| v.get("name"))
-				.and_then(|v| v.as_str())
-				.map(|s| s.trim_start_matches("refs/heads/"))
-				.unwrap()
-				.to_string()
-		} else {
-			let url = format!("{}/repos/{}/{}/-/git/head", API_URL, repo_path.0, repo_path.1);
-			let mut request = HTTP_CLIENT.get(url);
-			if let Some(token) = &self.token {
-				request = request.bearer_auth(token);
-			}
-			let resp = request.send().await?;
-			let repo_info: JsonValue = resp.json().await?;
-			repo_info.0.get("name").and_then(|v| v.as_str()).unwrap().to_string()
-		};
+		let default_branch = get_repo_default_branch(&repo_info, self.token.clone()).await?;
 		repo_info
 			.0
 			.as_object_mut()
@@ -388,5 +357,48 @@ impl Client for CnbClient {
 		} else {
 			Err(Error::NotFound)
 		}
+	}
+}
+
+async fn get_repo_default_branch(repo_info: &JsonValue, token: Option<String>) -> Result<String> {
+	let is_public = repo_info
+		.0
+		.get("visibility_level")
+		.and_then(|v| v.as_str())
+		.map(|s| s.to_lowercase() == "public")
+		.unwrap_or(false);
+
+	let (owner, repo) = (
+		repo_info
+			.0
+			.get("owner")
+			.and_then(|v| v.get("login"))
+			.and_then(|v| v.as_str())
+			.unwrap()
+			.to_string(),
+		repo_info.0.get("name").and_then(|v| v.as_str()).unwrap().to_string(),
+	);
+	if is_public {
+		let url = format!("{}/repos/{}/{}/-/git/overview-branches?limit=5", BASE_URL, owner, repo);
+		let request = HTTP_CLIENT.get(url).header("Accept", "application/vnd.cnb.web+json");
+		let resp = request.send().await?;
+		let repo_info: JsonValue = resp.json().await?;
+		Ok(repo_info
+			.0
+			.get("default_branch")
+			.and_then(|v| v.get("name"))
+			.and_then(|v| v.as_str())
+			.map(|s| s.trim_start_matches("refs/heads/"))
+			.unwrap()
+			.to_string())
+	} else {
+		let url = format!("{}/repos/{}/{}/-/git/head", API_URL, owner, repo);
+		let mut request = HTTP_CLIENT.get(url);
+		if let Some(token) = token {
+			request = request.bearer_auth(token);
+		}
+		let resp = request.send().await?;
+		let repo_info: JsonValue = resp.json().await?;
+		Ok(repo_info.0.get("name").and_then(|v| v.as_str()).unwrap().to_string())
 	}
 }

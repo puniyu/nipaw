@@ -1,8 +1,8 @@
 {
-  "nipaw_core": "0.4.0",
-  "nipaw_cnb": "0.7.1",
-  "nipaw_github": "0.7.1",
-  "nipaw_gitee": "0.7.1",
-  "nipaw_gitcode": "0.7.1",
+  "nipaw_core": "0.8.0",
+  "nipaw_cnb": "0.8.0",
+  "nipaw_github": "0.8.0",
+  "nipaw_gitee": "0.8.0",
+  "nipaw_gitcode": "0.8.0",
   "nipaw_node": "1.4.1"
 }

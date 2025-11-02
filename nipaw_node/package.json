@@ -1,14 +1,14 @@
 {
-  "name": "@puniyu-plugins/nipaw",
+  "name": "@puniyu/nipaw",
   "version": "1.4.1",
-  "description": "Template project for writing node package with napi-rs",
+  "description": "一个git平台封装库",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
   "author": "Puniyu",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/puniyu-plugins/nipaw.git"
+    "url": "git+https://github.com/puniyu/nipaw.git"
   },
   "license": "LGPL-3.0-or-later",
   "keywords": [

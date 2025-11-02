@@ -14,8 +14,8 @@ exclude = ["nipaw_cli"]
 authors = ["wuliya <3369906077@qq.com>"]
 license = "LGPL-3.0-only"
 readme = "README.md"
-homepage = "https://github.com/puniyu-plugins/nipaw"
-repository = "https://github.com/puniyu-plugins/nipaw"
+homepage = "https://github.com/puniyu/nipaw"
+repository = "https://github.com/puniyu/nipaw"
 edition = "2024"
 rust-version = "1.88.0"
 

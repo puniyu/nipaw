@@ -844,7 +844,7 @@ checksum = "650eef8c711430f1a879fdd01d4745a7deea475becfb90269c06775983bbf086"
 
 [[package]]
 name = "nipaw_cnb"
-version = "0.4.1-alpha.0"
+version = "0.8.0"
 dependencies = [
  "async-trait",
  "chrono",
@@ -859,7 +859,7 @@ dependencies = [
 
 [[package]]
 name = "nipaw_core"
-version = "0.4.1-alpha.0"
+version = "0.8.0"
 dependencies = [
  "async-trait",
  "chrono",
@@ -873,7 +873,7 @@ dependencies = [
 
 [[package]]
 name = "nipaw_gitcode"
-version = "0.4.1-alpha.0"
+version = "0.8.0"
 dependencies = [
  "async-trait",
  "chrono",
@@ -888,7 +888,7 @@ dependencies = [
 
 [[package]]
 name = "nipaw_gitee"
-version = "0.4.1-alpha.0"
+version = "0.8.0"
 dependencies = [
  "async-trait",
  "chrono",
@@ -904,7 +904,7 @@ dependencies = [
 
 [[package]]
 name = "nipaw_github"
-version = "0.4.1-alpha.0"
+version = "0.8.0"
 dependencies = [
  "async-trait",
  "chrono",
