@@ -26,14 +26,14 @@ jobs:
           targets: ${{ matrix.platform.target }}
 
       - name: 设置 rust 缓存
-        uses: swatinem/rust-cache@v2
+        uses: swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0 # v2
         with:
           prefix-key: ${{ env.APP_NAME }}
 
       - name: 配置 pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4
         with:
-          version: 10
+          version: 10.20.0
 
       - name: 构建
         run: |
@@ -72,14 +72,14 @@ jobs:
           rustup target add ${{ matrix.platform.target }}
 
       - name: 设置 rust 缓存
-        uses: swatinem/rust-cache@v2
+        uses: swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0 # v2
         with:
           prefix-key: ${{ env.APP_NAME }}
 
       - name: 配置 pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4
         with:
-          version: 10
+          version: 10.20.0
 
       - name: 构建
         run: |
@@ -117,14 +117,14 @@ jobs:
           targets: ${{ matrix.platform.target }}
 
       - name: 设置 rust 缓存
-        uses: swatinem/rust-cache@v2
+        uses: swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0 # v2
         with:
           prefix-key: ${{ env.APP_NAME }}
 
       - name: 配置 pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4
         with:
-          version: 10
+          version: 10.20.0
 
       - name: 构建
         run: |
