@@ -34,7 +34,7 @@
     "dtsHeader": "// powered by nipaw_core\n"
   },
   "engines": {
-    "node": ">= 12.22.0 < 13 || >= 14.17.0 < 15 || >= 15.12.0 < 16 || >= 16.0.0"
+    "node": "25.1.0"
   },
   "scripts": {
     "artifacts": "napi artifacts",
@@ -43,7 +43,7 @@
     "create-npm-dirs": "napi create-npm-dirs"
   },
   "devDependencies": {
-    "@napi-rs/cli": "^3.2.0"
+    "@napi-rs/cli": "3.2.0"
   },
   "packageManager": "pnpm@10.14.0"
 }
