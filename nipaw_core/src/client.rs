@@ -1,9 +1,10 @@
 use crate::{
 	Result,
-	option::{CommitListOptions, OrgRepoListOptions, ReposListOptions},
+	option::{CommitListOptions, CreateIssueOptions, OrgRepoListOptions, ReposListOptions},
 	types::{
 		collaborator::{CollaboratorPermission, CollaboratorResult},
 		commit::CommitInfo,
+		issue::IssueInfo,
 		org::OrgInfo,
 		repo::RepoInfo,
 		user::{ContributionResult, UserInfo},
@@ -151,4 +152,19 @@ pub trait Client: Send + Sync {
 		user_name: &str,
 		permission: Option<CollaboratorPermission>,
 	) -> Result<CollaboratorResult>;
+
+	/// 创建一个issue
+	///
+	/// ## 参数
+	/// - `repo_path` - 仓库路径，格式为 `(owner, repo)`
+	/// - `title` - issue标题
+	/// - `body` - issue内容
+	/// - `option` - 创建issue选项, 详见 [CreateIssueOptions]
+	async fn create_issue(
+		&self,
+		repo_path: (&str, &str),
+		title: &str,
+		body: Option<&str>,
+		option: Option<CreateIssueOptions>,
+	) -> Result<IssueInfo>;
 }

@@ -9,6 +9,8 @@ use crate::{
 	common::{Html, JsonValue},
 };
 use async_trait::async_trait;
+use nipaw_core::option::CreateIssueOptions;
+use nipaw_core::types::issue::IssueInfo;
 use nipaw_core::{
 	Result,
 	error::Error,
@@ -303,6 +305,9 @@ impl Client for GiteeClient {
 		user_name: &str,
 		permission: Option<CollaboratorPermission>,
 	) -> Result<CollaboratorResult> {
+		if self.token.is_none() {
+			return Err(Error::TokenEmpty);
+		}
 		let url = format!(
 			"{}/repos/{}/{}/collaborators/{}",
 			API_URL, repo_path.0, repo_path.1, user_name
@@ -318,23 +323,47 @@ impl Client for GiteeClient {
 			None => "pull".to_string(),
 		};
 
-		let body = if let Some(token) = &self.token {
-			serde_json::json!({
-				"access_token": token.to_string(),
-				"permission": permission,
-			})
-		} else {
-			serde_json::json!({
-				"permission": permission,
-			})
-		};
+		let body = serde_json::json!({
+			"access_token": self.token.as_ref().unwrap(),
+			"permission": permission,
+		});
 
-		let resp = request
+		let res = request
 			.header(header::CONTENT_TYPE, "application/json")
 			.body(body.to_string())
 			.send()
+			.await?
+			.json::<JsonValue>()
 			.await?;
-		let collaborator: JsonValue = resp.json().await?;
-		Ok(collaborator.into())
+		Ok(res.into())
+	}
+
+	async fn create_issue(
+		&self,
+		repo_path: (&str, &str),
+		title: &str,
+		body: Option<&str>,
+		option: Option<CreateIssueOptions>,
+	) -> Result<IssueInfo> {
+		if self.token.is_none() {
+			return Err(Error::TokenEmpty);
+		}
+		let url = format!("{}/repos/{}/{}/issues", API_URL, repo_path.0, repo_path.1);
+		let request = HTTP_CLIENT.put(url).query(&[("access_token", self.token.as_ref().unwrap())]);
+		let mut req_body: HashMap<&str, String> = HashMap::new();
+		req_body.insert("title", title.to_string());
+		if let Some(body) = body {
+			req_body.insert("body", body.to_string());
+		}
+		if let Some(option) = option {
+			if !option.labels.is_empty() {
+				req_body.insert("labels", option.labels.join(","));
+			}
+			if !option.assignees.is_empty() {
+				req_body.insert("assignees", option.assignees.join(","));
+			}
+		};
+		let res = request.json(&req_body).send().await?.json::<JsonValue>().await?;
+		Ok(res.into())
 	}
 }

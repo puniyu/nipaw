@@ -1,8 +1,8 @@
 use chrono::{DateTime, Utc};
 use napi_derive::napi;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize, Default)]
 #[napi(object)]
 pub struct ReposListOptions {
 	/// 每页数量，默认 30，最大 100
@@ -17,7 +17,7 @@ impl From<ReposListOptions> for nipaw_core::option::ReposListOptions {
 	}
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize, Default)]
 #[napi(object)]
 pub struct CommitListOptions {
 	/// 每页数量，默认 30，最大 100
@@ -46,7 +46,7 @@ impl From<CommitListOptions> for nipaw_core::option::CommitListOptions {
 	}
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize, Default)]
 #[napi(object)]
 pub struct OrgRepoListOptions {
 	/// 每页数量，默认 30，最大 100
@@ -58,5 +58,20 @@ pub struct OrgRepoListOptions {
 impl From<OrgRepoListOptions> for nipaw_core::option::OrgRepoListOptions {
 	fn from(value: OrgRepoListOptions) -> Self {
 		nipaw_core::option::OrgRepoListOptions { per_page: value.per_page, page: value.page }
+	}
+}
+
+#[derive(Debug, Deserialize, Serialize, Default)]
+#[napi(object)]
+pub struct CreateIssueOptions {
+	/// 标签
+	pub labels: Vec<String>,
+	/// 分配的用户名
+	pub assignees: Vec<String>,
+}
+
+impl From<CreateIssueOptions> for nipaw_core::option::CreateIssueOptions {
+	fn from(value: CreateIssueOptions) -> Self {
+		nipaw_core::option::CreateIssueOptions { labels: value.labels, assignees: value.assignees }
 	}
 }

@@ -10,6 +10,8 @@ use crate::{
 };
 use async_trait::async_trait;
 use http::header;
+use nipaw_core::option::CreateIssueOptions;
+use nipaw_core::types::issue::IssueInfo;
 use nipaw_core::{
 	CollaboratorPermission, Result,
 	error::Error,
@@ -92,9 +94,9 @@ impl Client for GitCodeClient {
 
 	async fn get_user_avatar_url(&self, user_name: &str) -> Result<String> {
 		let url = format!("{}/uc/api/v1/user/setting/profile?username={}", WEB_API_URL, user_name);
-		let resp = HTTP_CLIENT.get(url).header("Referer", BASE_URL).send().await?;
-		let user_info: Value = resp.json().await?;
-		let avatar_url = user_info.get("avatar").and_then(|v| v.as_str()).unwrap().to_string();
+		let res =
+			HTTP_CLIENT.get(url).header("Referer", BASE_URL).send().await?.json::<Value>().await?;
+		let avatar_url = res.get("avatar").and_then(|v| v.as_str()).unwrap().to_string();
 		Ok(avatar_url)
 	}
 
@@ -103,9 +105,8 @@ impl Client for GitCodeClient {
 			Url::parse(&format!("{}/uc/api/v1/events/{}/contributions", WEB_API_URL, user_name))?;
 		url.query_pairs_mut().append_pair("username", user_name);
 		let request = HTTP_CLIENT.get(url);
-		let resp = request.header("Referer", BASE_URL).send().await?;
-		let contribution_result: JsonValue = resp.json().await?;
-		Ok(contribution_result.into())
+		let res = request.header("Referer", BASE_URL).send().await?.json::<JsonValue>().await?;
+		Ok(res.into())
 	}
 
 	async fn get_org_info(&self, org_name: &str) -> Result<OrgInfo> {
@@ -114,9 +115,8 @@ impl Client for GitCodeClient {
 		if let Some(token) = &self.token {
 			request = request.bearer_auth(token);
 		}
-		let resp = request.send().await?;
-		let org_info: JsonValue = resp.json().await?;
-		Ok(org_info.into())
+		let res = request.send().await?.json::<JsonValue>().await?;
+		Ok(res.into())
 	}
 
 	async fn get_org_repos(
@@ -136,16 +136,15 @@ impl Client for GitCodeClient {
 			let page = option.page.unwrap_or_default();
 			params.insert("page", page.to_string());
 		}
-		let resp = request.query(&params).send().await?;
-		let repo_infos: Vec<JsonValue> = resp.json().await?;
-		Ok(repo_infos.into_iter().map(|v| v.into()).collect())
+		let res = request.query(&params).send().await?.json::<Vec<JsonValue>>().await?;
+		Ok(res.into_iter().map(|v| v.into()).collect())
 	}
 
 	async fn get_org_avatar_url(&self, org_name: &str) -> Result<String> {
 		let url = format!("{}/api/v2/groups/{}", WEB_API_URL, org_name);
-		let resp = HTTP_CLIENT.get(url).header("Referer", BASE_URL).send().await?;
-		let org_info: Value = resp.json().await?;
-		let avatar_url = org_info.get("avatar").and_then(|v| v.as_str()).unwrap().to_string();
+		let res =
+			HTTP_CLIENT.get(url).header("Referer", BASE_URL).send().await?.json::<Value>().await?;
+		let avatar_url = res.get("avatar").and_then(|v| v.as_str()).unwrap().to_string();
 		Ok(avatar_url)
 	}
 
@@ -155,9 +154,8 @@ impl Client for GitCodeClient {
 		if let Some(token) = &self.token {
 			request = request.bearer_auth(token);
 		}
-		let resp = request.send().await?;
-		let repo_info: JsonValue = resp.json().await?;
-		Ok(repo_info.into())
+		let res = request.send().await?.json::<JsonValue>().await?;
+		Ok(res.into())
 	}
 
 	async fn get_user_repos(&self, option: Option<ReposListOptions>) -> Result<Vec<RepoInfo>> {
@@ -177,9 +175,8 @@ impl Client for GitCodeClient {
 			let page = option.page.unwrap_or_default();
 			params.insert("page", page.to_string());
 		}
-		let resp = request.query(&params).send().await?;
-		let repo_infos: Vec<JsonValue> = resp.json().await?;
-		Ok(repo_infos.into_iter().map(|v| v.into()).collect())
+		let res = request.query(&params).send().await?.json::<Vec<JsonValue>>().await?;
+		Ok(res.into_iter().map(|v| v.into()).collect())
 	}
 
 	async fn get_user_repos_with_name(
@@ -203,9 +200,8 @@ impl Client for GitCodeClient {
 			let page = option.page.unwrap_or_default();
 			params.insert("page", page.to_string());
 		}
-		let resp = request.query(&params).send().await?;
-		let repo_infos: Vec<JsonValue> = resp.json().await?;
-		Ok(repo_infos.into_iter().map(|v| v.into()).collect())
+		let res = request.query(&params).send().await?.json::<Vec<JsonValue>>().await?;
+		Ok(res.into_iter().map(|v| v.into()).collect())
 	}
 
 	async fn get_commit_info(
@@ -225,7 +221,7 @@ impl Client for GitCodeClient {
 			request = request.bearer_auth(token);
 		}
 		let resp = request.send().await?;
-		let mut commit_info: JsonValue = resp.json().await?;
+		let mut commit_info = resp.json::<JsonValue>().await?;
 
 		let author_name = commit_info
 			.0
@@ -302,9 +298,8 @@ impl Client for GitCodeClient {
 				params.insert("until", until.to_rfc3339());
 			}
 		}
-		let resp = request.query(&params).send().await?;
-		let commit_infos: Vec<JsonValue> = resp.json().await?;
-		Ok(commit_infos.into_iter().map(|v| v.into()).collect())
+		let res = request.query(&params).send().await?.json::<Vec<JsonValue>>().await?;
+		Ok(res.into_iter().map(|v| v.into()).collect())
 	}
 
 	async fn add_repo_collaborator(
@@ -313,6 +308,9 @@ impl Client for GitCodeClient {
 		user_name: &str,
 		permission: Option<CollaboratorPermission>,
 	) -> Result<CollaboratorResult> {
+		if self.token.is_none() {
+			return Err(Error::TokenEmpty);
+		}
 		let url = format!(
 			"{}/repos/{}/{}/collaborators/{}",
 			API_URL, repo_path.0, repo_path.1, user_name
@@ -338,12 +336,42 @@ impl Client for GitCodeClient {
 			.body(body.to_string())
 			.send()
 			.await?;
-		let mut collaborator: JsonValue = resp.json().await?;
+		let mut collaborator = resp.json::<JsonValue>().await?;
 		if let Some(obj) = collaborator.0.as_object_mut() {
 			let avatar_url = self.get_user_avatar_url(user_name).await?;
 			obj.insert("avatar_url".to_string(), Value::String(avatar_url));
 		}
 		Ok(collaborator.into())
+	}
+
+	async fn create_issue(
+		&self,
+		repo_path: (&str, &str),
+		title: &str,
+		body: Option<&str>,
+		option: Option<CreateIssueOptions>,
+	) -> Result<IssueInfo> {
+		if self.token.is_none() {
+			return Err(Error::TokenEmpty);
+		}
+		let url = format!("{}/repos/{}/{}/issues", API_URL, repo_path.0, repo_path.1);
+		let request = HTTP_CLIENT.post(url).bearer_auth(self.token.as_ref().unwrap());
+		let mut req_body: HashMap<&str, String> = HashMap::new();
+		req_body.insert("title", title.to_string());
+		if let Some(body) = body {
+			req_body.insert("body", body.to_string());
+		}
+		if let Some(option) = option {
+			if !option.labels.is_empty() {
+				req_body.insert("labels", option.labels.join(","));
+			}
+			if !option.assignees.is_empty() {
+				req_body.insert("assignees", option.assignees.join(","));
+			}
+		};
+
+		let res = request.json(&req_body).send().await?.json::<JsonValue>().await?;
+		Ok(res.into())
 	}
 }
 

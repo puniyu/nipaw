@@ -1,10 +1,11 @@
 use crate::{
 	common::RT_RUNTIME,
 	error,
-	option::{CommitListOptions, OrgRepoListOptions, ReposListOptions},
+	option::{CommitListOptions, CreateIssueOptions, OrgRepoListOptions, ReposListOptions},
 	types::{
 		collaborator::{CollaboratorPermission, CollaboratorResult},
 		commit::CommitInfo,
+		issue::IssueInfo,
 		org::OrgInfo,
 		repo::RepoInfo,
 		user::{ContributionResult, UserInfo},
@@ -257,6 +258,30 @@ macro_rules! impl_client {
 						)
 						.await?;
 					Ok(collaborator_result.into())
+				}
+				/// 创建一个issue
+				///
+				/// ## 参数
+				/// - `owner` - 仓库所有者
+				/// - `name` - 仓库名称
+				/// - `title` - issue标题
+				/// - `body` - issue内容
+				/// - `option` - 创建issue选项, 详见 [CreateIssueOptions]
+				#[napi]
+				pub async fn create_issue(
+					&self,
+					owner: String,
+					name: String,
+					title: String,
+					body: Option<String>,
+					option: Option<CreateIssueOptions>,
+				) -> Result<IssueInfo> {
+					let client = [<create_client_ $client_type:lower>]().await;
+					let repo_path = (owner.as_str(), name.as_str());
+					let issue_info = client
+						.create_issue(repo_path, title.as_str(), body.as_deref(), option.map(|o| o.into()))
+						.await?;
+					Ok(issue_info.into())
 				}
 			}
 		}

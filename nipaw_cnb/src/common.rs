@@ -1,10 +1,12 @@
+use crate::BASE_URL;
 use chrono::{NaiveDate, Utc, Weekday};
 use itertools::Itertools;
-use nipaw_core::types::repo::Visibility;
+use nipaw_core::types::issue::StateType;
 use nipaw_core::types::{
-	commit::{CommitData, CommitInfo, StatsInfo, UserInfo as CommitUserInfo},
+	commit::{self, CommitData, CommitInfo, StatsInfo},
+	issue::{self, IssueInfo},
 	org::OrgInfo,
-	repo::RepoInfo,
+	repo::{RepoInfo, Visibility},
 	user::{ContributionData, ContributionResult, UserInfo},
 };
 use serde::{Deserialize, Serialize};
@@ -16,7 +18,7 @@ impl From<JsonValue> for UserInfo {
 	fn from(json_value: JsonValue) -> Self {
 		let user_info = json_value.0;
 		let login = user_info.get("username").and_then(|v| v.as_str()).unwrap();
-		UserInfo {
+		Self {
 			id: user_info.get("id").and_then(|v| v.as_str()).unwrap().to_string(),
 			login: login.to_string(),
 			name: user_info.get("nickname").and_then(|v| v.as_str()).map(|s| s.to_string()),
@@ -38,7 +40,7 @@ impl From<JsonValue> for RepoInfo {
 			.map(|s| s.to_lowercase() == "public")
 			.unwrap_or(false);
 
-		RepoInfo {
+		Self {
 			id: repo_info.get("id").and_then(|v| v.as_str()).unwrap().to_string(),
 			owner: repo_info
 				.get("owner")
@@ -95,7 +97,7 @@ impl From<JsonValue> for ContributionResult {
 	fn from(value: JsonValue) -> Self {
 		let contribution_result = value.0;
 
-		let contributions: Vec<Vec<ContributionData>> = contribution_result
+		let contributions = contribution_result
 			.as_object()
 			.unwrap()
 			.iter()
@@ -117,11 +119,11 @@ impl From<JsonValue> for ContributionResult {
 			})
 			.into_iter()
 			.map(|(_, week_data)| week_data.collect::<Vec<_>>())
-			.collect();
+			.collect::<Vec<Vec<ContributionData>>>();
 
 		let total = contributions.iter().flatten().map(|c| c.count).sum();
 
-		ContributionResult { total, contributions }
+		Self { total, contributions }
 	}
 }
 
@@ -130,7 +132,7 @@ impl From<JsonValue> for CommitInfo {
 		let commit_info = value.0;
 		let commit_value = commit_info.get("commit").unwrap().clone();
 		let stats_value = commit_info.get("stats").unwrap().clone();
-		CommitInfo {
+		Self {
 			sha: commit_info.get("sha").and_then(|v| v.as_str()).unwrap().to_string(),
 			commit: JsonValue(commit_value).into(),
 			stats: JsonValue(stats_value).into(),
@@ -143,7 +145,7 @@ impl From<JsonValue> for CommitData {
 		let commit_data = value.0;
 		let author_value = commit_data.get("author").unwrap().clone();
 		let committer_value = commit_data.get("committer").unwrap().clone();
-		CommitData {
+		Self {
 			author: JsonValue(author_value).into(),
 			committer: JsonValue(committer_value).into(),
 			message: commit_data.get("message").and_then(|v| v.as_str()).unwrap().to_string(),
@@ -151,10 +153,10 @@ impl From<JsonValue> for CommitData {
 	}
 }
 
-impl From<JsonValue> for CommitUserInfo {
+impl From<JsonValue> for commit::UserInfo {
 	fn from(value: JsonValue) -> Self {
 		let user_info = value.0;
-		CommitUserInfo {
+		Self {
 			name: user_info.get("name").and_then(|v| v.as_str()).unwrap().to_string(),
 			email: user_info.get("email").and_then(|v| v.as_str()).map(|s| s.to_string()),
 			avatar_url: user_info.get("avatar_url").and_then(|v| v.as_str()).unwrap().to_string(),
@@ -172,7 +174,7 @@ impl From<JsonValue> for CommitUserInfo {
 impl From<JsonValue> for StatsInfo {
 	fn from(value: JsonValue) -> Self {
 		let stats_info = value.0;
-		StatsInfo {
+		Self {
 			total: stats_info.get("total").and_then(|v| v.as_u64()).unwrap_or(0),
 			additions: stats_info.get("additions").and_then(|v| v.as_u64()).unwrap_or(0),
 			deletions: stats_info.get("deletions").and_then(|v| v.as_u64()).unwrap_or(0),
@@ -183,7 +185,7 @@ impl From<JsonValue> for StatsInfo {
 impl From<JsonValue> for OrgInfo {
 	fn from(json_value: JsonValue) -> Self {
 		let org_info = json_value.0;
-		OrgInfo {
+		Self {
 			id: org_info.get("id").and_then(|v| v.as_u64()).unwrap(),
 			login: org_info.get("login").and_then(|v| v.as_str()).unwrap().to_string(),
 			name: org_info.get("name").and_then(|v| v.as_str()).map(|s| s.to_string()),
@@ -195,5 +197,74 @@ impl From<JsonValue> for OrgInfo {
 				.map(|s| s.to_string()),
 			follow_count: org_info.get("followers").and_then(|v| v.as_u64()).unwrap_or(0),
 		}
+	}
+}
+
+impl From<JsonValue> for IssueInfo {
+	fn from(issue: JsonValue) -> Self {
+		let issue_info = issue.0;
+		let is_open =
+			issue_info.get("state").and_then(|v| v.as_str()).map(|s| s == "open").unwrap_or(false);
+		let user_info = issue_info.get("user").unwrap().clone();
+		let labels_info = issue_info.get("labels").unwrap().clone();
+		Self {
+			id: issue_info.get("id").and_then(|v| v.as_u64()).unwrap(),
+			number: issue_info.get("number").and_then(|v| v.as_str()).unwrap().to_string(),
+			state: if is_open { StateType::Opened } else { StateType::Closed },
+			title: issue_info.get("title").and_then(|v| v.as_str()).unwrap().to_string(),
+			body: issue_info.get("body").and_then(|v| v.as_str()).map(|s| s.to_string()),
+			labels: JsonValue(labels_info).into(),
+			user: JsonValue(user_info).into(),
+			created_at: issue_info
+				.get("created_at")
+				.and_then(|v| v.as_str())
+				.unwrap()
+				.to_string()
+				.parse()
+				.unwrap(),
+			updated_at: issue_info
+				.get("updated_at")
+				.and_then(|v| v.as_str())
+				.unwrap()
+				.to_string()
+				.parse()
+				.unwrap(),
+			closed_at: issue_info
+				.get("closed_at")
+				.and_then(|v| v.as_str())
+				.and_then(|s| s.parse::<chrono::DateTime<Utc>>().ok()),
+		}
+	}
+}
+
+impl From<JsonValue> for issue::UserInfo {
+	fn from(user: JsonValue) -> Self {
+		let user_info = user.0;
+		let name = user_info.get("username").and_then(|v| v.as_str()).unwrap().to_string();
+		Self {
+			name: user_info.get("name").and_then(|v| v.as_str()).unwrap().to_string(),
+			avatar_url: format!("{}/users/{}/avatar/l", BASE_URL, name),
+			email: Some(user_info.get("email").and_then(|v| v.as_str()).unwrap().to_string()),
+		}
+	}
+}
+
+impl From<JsonValue> for issue::LabelInfo {
+	fn from(label: JsonValue) -> Self {
+		let label_info = label.0;
+		Self {
+			name: label_info.get("name").and_then(|v| v.as_str()).unwrap().to_string(),
+			color: label_info.get("color").and_then(|v| v.as_str()).unwrap().to_string(),
+		}
+	}
+}
+
+impl From<JsonValue> for Vec<issue::LabelInfo> {
+	fn from(label: JsonValue) -> Self {
+		label
+			.0
+			.as_array()
+			.map(|arr| arr.iter().map(|v| JsonValue(v.clone()).into()).collect())
+			.unwrap_or_default()
 	}
 }

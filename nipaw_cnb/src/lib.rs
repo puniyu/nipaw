@@ -10,6 +10,8 @@ use crate::{
 };
 use async_trait::async_trait;
 use chrono::{Datelike, Local};
+use nipaw_core::option::CreateIssueOptions;
+use nipaw_core::types::issue::IssueInfo;
 use nipaw_core::{
 	CollaboratorPermission, Result,
 	error::Error,
@@ -98,8 +100,7 @@ impl Client for CnbClient {
 	}
 
 	async fn get_user_avatar_url(&self, user_name: &str) -> Result<String> {
-		let url = format!("{}/users/{}/avatar/l", BASE_URL, user_name);
-		Ok(url.to_string())
+		Ok(format!("{}/users/{}/avatar/l", BASE_URL, user_name))
 	}
 
 	async fn get_user_contribution(&self, user_name: &str) -> Result<ContributionResult> {
@@ -324,11 +325,11 @@ impl Client for CnbClient {
 		user_name: &str,
 		permission: Option<CollaboratorPermission>,
 	) -> Result<CollaboratorResult> {
-		let url = format!("{}/{}/{}/-/members/{}", API_URL, repo_path.0, repo_path.1, user_name);
-		let mut request = HTTP_CLIENT.post(url);
-		if let Some(token) = &self.token {
-			request = request.bearer_auth(token);
+		if self.token.is_none() {
+			return Err(Error::TokenEmpty);
 		}
+		let url = format!("{}/{}/{}/-/members/{}", API_URL, repo_path.0, repo_path.1, user_name);
+		let request = HTTP_CLIENT.post(url).bearer_auth(self.token.as_ref().unwrap());
 		let permission = match permission {
 			Some(permission) => match permission {
 				CollaboratorPermission::Admin => "Master",
@@ -357,6 +358,47 @@ impl Client for CnbClient {
 		} else {
 			Err(Error::NotFound)
 		}
+	}
+
+	async fn create_issue(
+		&self,
+		repo_path: (&str, &str),
+		title: &str,
+		body: Option<&str>,
+		option: Option<CreateIssueOptions>,
+	) -> Result<IssueInfo> {
+		if self.token.is_none() {
+			return Err(Error::TokenEmpty);
+		}
+		let url = format!("{}/{}/{}/-/issues", API_URL, repo_path.0, repo_path.1);
+		let request = HTTP_CLIENT.post(url).bearer_auth(self.token.as_ref().unwrap());
+		let mut req_body: HashMap<&str, String> = HashMap::new();
+		req_body.insert("title", title.to_string());
+		if let Some(body) = body {
+			req_body.insert("body", body.to_string());
+		}
+		if let Some(option) = option {
+			if !option.labels.is_empty() {
+				req_body.insert("labels", option.labels.join(","));
+			}
+			if !option.assignees.is_empty() {
+				req_body.insert("assignees", option.assignees.join(","));
+			}
+		};
+
+		let mut res = request.json(&req_body).send().await?.json::<JsonValue>().await?;
+		let user_name = res
+			.0
+			.get("author")
+			.and_then(|author| author.get("username"))
+			.and_then(|username| username.as_str())
+			.map(|s| s.to_string())
+			.unwrap_or_default();
+		let user_info = get_user_info(&user_name).await?;
+		if let Some(obj) = res.0.as_object_mut() {
+			obj.insert("user".to_string(), serde_json::to_value(user_info).unwrap());
+		}
+		Ok(res.into())
 	}
 }
 
@@ -401,4 +443,11 @@ async fn get_repo_default_branch(repo_info: &JsonValue, token: Option<String>) -
 		let repo_info: JsonValue = resp.json().await?;
 		Ok(repo_info.0.get("name").and_then(|v| v.as_str()).unwrap().to_string())
 	}
+}
+
+async fn get_user_info(user_name: &str) -> Result<UserInfo> {
+	let url = format!("{}/user/{}", BASE_URL, user_name);
+	let request = HTTP_CLIENT.get(url).header("Accept", "application/vnd.cnb.web+json");
+	let resp = request.send().await?.json::<JsonValue>().await?;
+	Ok(resp.into())
 }
