@@ -16,8 +16,8 @@ publish = false
 crate-type = ["cdylib"]
 
 [dependencies]
-napi = { version = "3.0.0", features = ["chrono_date", "async"] }
-napi-derive = "3.0.0"
+napi = { version = "=3.0.0", features = ["chrono_date", "async"] }
+napi-derive = "=3.0.0"
 strum.workspace = true
 serde.workspace = true
 chrono.workspace = true
@@ -28,9 +28,9 @@ nipaw_github = { path = "../nipaw_github" }
 nipaw_gitee = { path = "../nipaw_gitee" }
 nipaw_gitcode = { path = "../nipaw_gitcode" }
 nipaw_cnb = { path = "../nipaw_cnb" }
-paste = "1.0.15"
+paste = "=1.0.15"
 
 
 [build-dependencies]
-napi-build = "2"
+napi-build = "=2.2.3"
 
