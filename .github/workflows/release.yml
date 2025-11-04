@@ -105,13 +105,13 @@ jobs:
     needs: [ release, build ]
     steps:
       - name: 下载npm包
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
           name: "npm-package"
           path: nipaw_node
 
       - name: 下载构建产物
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
           pattern: nipaw-node*
           path: nipaw_node/artifacts
