@@ -3,12 +3,40 @@
   "extends": [
     "github>puniyu/.github//.github/renovate"
   ],
+  "constraints": {
+    "node": ">=20.0.0"
+  },
   "packageRules": [
     {
       "groupName": "nipaw packages",
       "matchManagers": ["cargo"],
-      "rangeStrategy": "auto",
       "schedule": ["at any time"],
+      "labels": [
+        "dependencies"
+      ],
+      "automerge": true
+    },
+    {
+      "groupName": "npm packages",
+      "matchManagers": [
+        "npm"
+      ],
+      "schedule": [
+        "at any time"
+      ],
+      "labels": [
+        "dependencies"
+      ],
+      "automerge": true
+    },
+    {
+      "groupName": "github actions",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "schedule": [
+        "at any time"
+      ],
       "labels": [
         "dependencies"
       ],
