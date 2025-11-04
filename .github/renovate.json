@@ -13,8 +13,7 @@
       "schedule": ["at any time"],
       "labels": [
         "dependencies"
-      ],
-      "automerge": true
+      ]
     },
     {
       "groupName": "npm packages",
@@ -26,8 +25,7 @@
       ],
       "labels": [
         "dependencies"
-      ],
-      "automerge": true
+      ]
     },
     {
       "groupName": "github actions",
@@ -39,8 +37,7 @@
       ],
       "labels": [
         "dependencies"
-      ],
-      "automerge": true
+      ]
     }
   ]
 }
