@@ -421,18 +421,18 @@ async fn get_repo_default_branch(repo_info: &JsonValue, token: Option<String>) -
 		repo_info.0.get("name").and_then(|v| v.as_str()).unwrap().to_string(),
 	);
 	if is_public {
-		let url = format!("{}/repos/{}/{}/-/git/overview-branches?limit=5", BASE_URL, owner, repo);
+		let url = format!(
+			"{}/{}/{}/-/git/refs?page=1&page_size=5000&prefix=branch",
+			BASE_URL, owner, repo
+		);
 		let request = HTTP_CLIENT.get(url).header("Accept", "application/vnd.cnb.web+json");
-		let resp = request.send().await?;
-		let repo_info: JsonValue = resp.json().await?;
-		Ok(repo_info
-			.0
-			.get("default_branch")
-			.and_then(|v| v.get("name"))
-			.and_then(|v| v.as_str())
-			.map(|s| s.trim_start_matches("refs/heads/"))
-			.unwrap()
-			.to_string())
+		let res = request.send().await?.json::<Vec<Value>>().await?;
+		let default_branch = res
+			.into_iter()
+			.find(|branch| branch.get("is_head").and_then(|v| v.as_bool()).unwrap_or(false))
+			.and_then(|branch| branch.get("ref").and_then(|v| v.as_str()).map(|s| s.to_string()))
+			.map(|ref_str| ref_str.trim_start_matches("refs/heads/").to_string());
+		Ok(default_branch.unwrap())
 	} else {
 		let url = format!("{}/repos/{}/{}/-/git/head", API_URL, owner, repo);
 		let mut request = HTTP_CLIENT.get(url);
