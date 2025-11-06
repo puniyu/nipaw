@@ -1,5 +1,24 @@
 # 变更日志
 
+## [0.10.0](https://github.com/puniyu/nipaw/compare/gitcode-v0.9.0...gitcode-v0.10.0) (2025-11-06)
+
+
+### ✨ 新功能
+
+* **core:** 添加创建议题功能 ([6e270c1](https://github.com/puniyu/nipaw/commit/6e270c1b642d496cae92915506c102f05db4c161))
+
+
+### 🐛 错误修复
+
+* **auth:** 细化 Forbidden 错误信息处理 ([c611a41](https://github.com/puniyu/nipaw/commit/c611a418d822965c365811fe0a328979547b2db8))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * nipaw_core bumped from 0.9.0 to 0.10.0
+
 ## [0.9.0](https://github.com/puniyu/nipaw/compare/gitcode-v0.8.0...gitcode-v0.9.0) (2025-11-02)
 
 

@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.6.0](https://github.com/puniyu/nipaw/compare/node-v1.5.0...node-v1.6.0) (2025-11-06)
+
+
+### ✨ 新功能
+
+* **core:** 添加创建议题功能 ([6e270c1](https://github.com/puniyu/nipaw/commit/6e270c1b642d496cae92915506c102f05db4c161))
+
+
+### 🐛 错误修复
+
+* 修复依赖构建 ([5da7108](https://github.com/puniyu/nipaw/commit/5da71088fb56109d5d3a18d837bd21b5983e896c))
+
+
+### 🔧 其他更新
+
+* **deps:** pin dependencies ([#33](https://github.com/puniyu/nipaw/issues/33)) ([5fe1af6](https://github.com/puniyu/nipaw/commit/5fe1af6c0704e0cc74dd5a7a1347ae28a20f7316))
+* **deps:** update npm packages ([734dcf8](https://github.com/puniyu/nipaw/commit/734dcf8de9bf212890809185ee4208146b7bc4b2))
+
 ## [1.5.0](https://github.com/puniyu/nipaw/compare/node-v1.4.1...node-v1.5.0) (2025-11-02)
 
 

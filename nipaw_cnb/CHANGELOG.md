@@ -1,5 +1,25 @@
 # 变更日志
 
+## [0.10.0](https://github.com/puniyu/nipaw/compare/cnb-v0.9.0...cnb-v0.10.0) (2025-11-06)
+
+
+### ✨ 新功能
+
+* **core:** 添加创建议题功能 ([6e270c1](https://github.com/puniyu/nipaw/commit/6e270c1b642d496cae92915506c102f05db4c161))
+
+
+### 🐛 错误修复
+
+* **auth:** 细化 Forbidden 错误信息处理 ([c611a41](https://github.com/puniyu/nipaw/commit/c611a418d822965c365811fe0a328979547b2db8))
+* **nipaw_cnb:** 更新cnb.coll默认分支获取逻辑以支持新API格式 ([064e0df](https://github.com/puniyu/nipaw/commit/064e0df39db89ae19289528c629ece957c967dfd))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * nipaw_core bumped from 0.9.0 to 0.10.0
+
 ## [0.9.0](https://github.com/puniyu/nipaw/compare/cnb-v0.8.0...cnb-v0.9.0) (2025-11-02)
 
 
