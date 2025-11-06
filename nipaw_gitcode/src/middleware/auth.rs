@@ -1,8 +1,19 @@
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 use http::Extensions;
 use nipaw_core::Error as CoreError;
 use reqwest::{Request, Response, StatusCode};
 use reqwest_middleware::{Error, Middleware, Next, Result};
+use serde::Deserialize;
+
+#[allow(dead_code)]
+#[derive(Debug, Deserialize)]
+struct ErrorResponse {
+	timestamp: DateTime<Utc>,
+	status: u16,
+	error: String,
+	path: String,
+}
 
 pub struct AuthMiddleware;
 
@@ -19,9 +30,11 @@ impl Middleware for AuthMiddleware {
 			StatusCode::OK => Ok(res),
 			StatusCode::UNAUTHORIZED => Err(Error::Middleware(CoreError::Unauthorized.into())),
 			StatusCode::NOT_FOUND => Err(Error::Middleware(CoreError::NotFound.into())),
-			StatusCode::FORBIDDEN | StatusCode::TOO_MANY_REQUESTS => {
-				Err(Error::Middleware(CoreError::RateLimit.into()))
+			StatusCode::FORBIDDEN => {
+				let message = res.json::<ErrorResponse>().await?.error;
+				Err(Error::Middleware(CoreError::Forbidden(message).into()))
 			}
+			StatusCode::TOO_MANY_REQUESTS => Err(Error::Middleware(CoreError::RateLimit.into())),
 			_ => Ok(res),
 		}
 	}

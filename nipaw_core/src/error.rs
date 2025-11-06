@@ -12,6 +12,8 @@ pub enum Error {
 	URLParseError(#[from] url::ParseError),
 	#[error("not found")]
 	NotFound,
+	#[error("forbidden: {0}")]
+	Forbidden(String),
 	#[error("unauthorized")]
 	Unauthorized,
 	#[error("rate limit")]

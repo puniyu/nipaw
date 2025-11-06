@@ -233,23 +233,22 @@ impl Client for GitHubClient {
 		if let Some(token) = &self.token {
 			request = request.bearer_auth(token);
 		}
-		let resp = request.send().await?;
-		let mut commit_info: JsonValue = resp.json().await?;
-		let author_avatar_url = commit_info
+		let mut res = request.send().await?.json::<JsonValue>().await?;
+		let author_avatar_url = res
 			.0
 			.get("author")
 			.and_then(|v| v.get("avatar_url"))
 			.and_then(|v| v.as_str())
 			.unwrap()
 			.to_string();
-		let committer_avatar_url = commit_info
+		let committer_avatar_url = res
 			.0
 			.get("committer")
 			.and_then(|v| v.get("avatar_url"))
 			.and_then(|v| v.as_str())
 			.unwrap()
 			.to_string();
-		if let Some(author_obj) = commit_info
+		if let Some(author_obj) = res
 			.0
 			.get_mut("commit")
 			.and_then(|commit| commit.as_object_mut())
@@ -259,7 +258,7 @@ impl Client for GitHubClient {
 			author_obj.insert("avatar_url".to_string(), Value::String(author_avatar_url));
 		}
 
-		if let Some(committer_obj) = commit_info
+		if let Some(committer_obj) = res
 			.0
 			.get_mut("commit")
 			.and_then(|commit| commit.as_object_mut())
@@ -268,7 +267,7 @@ impl Client for GitHubClient {
 		{
 			committer_obj.insert("avatar_url".to_string(), Value::String(committer_avatar_url));
 		}
-		Ok(commit_info.into())
+		Ok(res.into())
 	}
 
 	async fn get_commit_infos(

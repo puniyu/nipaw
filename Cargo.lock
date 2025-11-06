@@ -103,7 +103,7 @@ dependencies = [
  "num-traits",
  "serde",
  "wasm-bindgen",
-    "windows-link",
+ "windows-link",
 ]
 
 [[package]]
@@ -324,7 +324,7 @@ dependencies = [
  "cfg-if",
  "js-sys",
  "libc",
-    "wasi",
+ "wasi",
  "wasm-bindgen",
 ]
 
@@ -338,7 +338,7 @@ dependencies = [
  "js-sys",
  "libc",
  "r-efi",
-    "wasip2",
+ "wasip2",
  "wasm-bindgen",
 ]
 
@@ -712,8 +712,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "69d83b0086dc8ecf3ce9ae2874b2d1290252e2a30720bea58a5c6639b0092873"
 dependencies = [
  "libc",
-    "wasi",
-    "windows-sys 0.61.2",
+ "wasi",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -805,7 +805,7 @@ dependencies = [
  "reqwest-middleware",
  "serde",
  "strum",
-    "thiserror 2.0.17",
+ "thiserror 2.0.17",
  "url",
 ]
 
@@ -872,7 +872,7 @@ dependencies = [
  "paste",
  "serde",
  "strum",
-    "thiserror 2.0.17",
+ "thiserror 2.0.17",
 ]
 
 [[package]]
@@ -916,7 +916,7 @@ dependencies = [
  "libc",
  "redox_syscall",
  "smallvec",
-    "windows-link",
+ "windows-link",
 ]
 
 [[package]]
@@ -1042,7 +1042,7 @@ dependencies = [
  "rustc-hash",
  "rustls",
  "socket2",
-    "thiserror 2.0.17",
+ "thiserror 2.0.17",
  "tokio",
  "tracing",
  "web-time",
@@ -1055,7 +1055,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f1906b49b0c3bc04b5fe5d86a77925ae6524a19b816ae38ce1e426255f1d8a31"
 dependencies = [
  "bytes",
-    "getrandom 0.3.4",
+ "getrandom 0.3.4",
  "lru-slab",
  "rand 0.9.2",
  "ring",
@@ -1063,7 +1063,7 @@ dependencies = [
  "rustls",
  "rustls-pki-types",
  "slab",
-    "thiserror 2.0.17",
+ "thiserror 2.0.17",
  "tinyvec",
  "tracing",
  "web-time",
@@ -1139,7 +1139,7 @@ version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "99d9a13982dcf210057a8a78572b2217b667c3beacbf3a0d8b454f6f82837d38"
 dependencies = [
-    "getrandom 0.3.4",
+ "getrandom 0.3.4",
 ]
 
 [[package]]
@@ -1412,7 +1412,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "17129e116933cf371d018bb80ae557e889637989d8638274fb25622827b03881"
 dependencies = [
  "libc",
-    "windows-sys 0.60.2",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -1530,7 +1530,7 @@ version = "2.0.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f63587ca0f12b72a0600bcba1d40081f830876000bb46dd2337a3051618f4fc8"
 dependencies = [
-    "thiserror-impl 2.0.17",
+ "thiserror-impl 2.0.17",
 ]
 
 [[package]]
@@ -1591,7 +1591,7 @@ dependencies = [
  "mio",
  "pin-project-lite",
  "socket2",
-    "windows-sys 0.61.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -1788,7 +1788,7 @@ version = "0.2.105"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "420bc339d9f322e562942d52e115d57e950d12d88983a14c79b86859ee6c7ebc"
 dependencies = [
-    "bumpalo",
+ "bumpalo",
  "proc-macro2",
  "quote",
  "syn",
@@ -1919,7 +1919,7 @@ version = "0.60.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f2f500e4d28234f72040990ec9d39e3a6b950f9f22d3dba18416c35882612bcb"
 dependencies = [
-    "windows-targets 0.53.5",
+ "windows-targets 0.53.5",
 ]
 
 [[package]]
@@ -1928,7 +1928,7 @@ version = "0.61.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ae137229bcbd6cdf0f7b80a31df61766145077ddf49416a728b02cb3921ff3fc"
 dependencies = [
-    "windows-link",
+ "windows-link",
 ]
 
 [[package]]
@@ -1954,14 +1954,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4945f9f551b88e0d65f3db0bc25c33b8acea4d9e41163edf90dcd0b19f9069f3"
 dependencies = [
  "windows-link",
-    "windows_aarch64_gnullvm 0.53.1",
-    "windows_aarch64_msvc 0.53.1",
-    "windows_i686_gnu 0.53.1",
-    "windows_i686_gnullvm 0.53.1",
-    "windows_i686_msvc 0.53.1",
-    "windows_x86_64_gnu 0.53.1",
-    "windows_x86_64_gnullvm 0.53.1",
-    "windows_x86_64_msvc 0.53.1",
+ "windows_aarch64_gnullvm 0.53.1",
+ "windows_aarch64_msvc 0.53.1",
+ "windows_i686_gnu 0.53.1",
+ "windows_i686_gnullvm 0.53.1",
+ "windows_i686_msvc 0.53.1",
+ "windows_x86_64_gnu 0.53.1",
+ "windows_x86_64_gnullvm 0.53.1",
+ "windows_x86_64_msvc 0.53.1",
 ]
 
 [[package]]
