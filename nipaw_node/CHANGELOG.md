@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.6.1](https://github.com/puniyu/nipaw/compare/node-v1.6.0...node-v1.6.1) (2025-11-07)
+
+
+### 🐛 错误修复
+
+* **commit:** 添加修改文件数统计字段 ([faf1e3b](https://github.com/puniyu/nipaw/commit/faf1e3b04784f0a6f79d4c4de4129cfac1af162b))
+
+
+### 🔧 其他更新
+
+* **deps:** update nipaw packages ([7c2f090](https://github.com/puniyu/nipaw/commit/7c2f0907027ed06a0922b6be41b192012d5a3792))
+
 ## [1.6.0](https://github.com/puniyu/nipaw/compare/node-v1.5.0...node-v1.6.0) (2025-11-06)
 
 

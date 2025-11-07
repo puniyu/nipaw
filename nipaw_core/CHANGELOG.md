@@ -1,5 +1,12 @@
 # 变更日志
 
+## [0.10.1](https://github.com/puniyu/nipaw/compare/core-v0.10.0...core-v0.10.1) (2025-11-07)
+
+
+### 🐛 错误修复
+
+* **commit:** 添加修改文件数统计字段 ([faf1e3b](https://github.com/puniyu/nipaw/commit/faf1e3b04784f0a6f79d4c4de4129cfac1af162b))
+
 ## [0.10.0](https://github.com/puniyu/nipaw/compare/core-v0.9.0...core-v0.10.0) (2025-11-06)
 
 
