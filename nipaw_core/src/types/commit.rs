@@ -9,6 +9,8 @@ pub struct CommitInfo {
 	pub commit: CommitData,
 	/// 提交统计信息
 	pub stats: StatsInfo,
+	/// 修改的文件数
+	pub change_files: u32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -11,6 +11,8 @@ pub struct CommitInfo {
 	pub commit: CommitData,
 	/// 提交统计信息
 	pub stats: StatsInfo,
+	/// 修改的文件数
+	pub change_files: u32,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -50,7 +52,12 @@ pub struct StatsInfo {
 
 impl From<nipaw_core::types::commit::CommitInfo> for CommitInfo {
 	fn from(value: nipaw_core::types::commit::CommitInfo) -> Self {
-		Self { sha: value.sha, commit: value.commit.into(), stats: value.stats.into() }
+		Self {
+			sha: value.sha,
+			commit: value.commit.into(),
+			stats: value.stats.into(),
+			change_files: value.change_files,
+		}
 	}
 }
 

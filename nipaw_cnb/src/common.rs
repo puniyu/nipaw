@@ -136,6 +136,12 @@ impl From<JsonValue> for CommitInfo {
 			sha: commit_info.get("sha").and_then(|v| v.as_str()).unwrap().to_string(),
 			commit: JsonValue(commit_value).into(),
 			stats: JsonValue(stats_value).into(),
+			change_files: commit_info
+				.get("files")
+				.and_then(|files| files.get("paths"))
+				.and_then(|paths| paths.as_array())
+				.map(|paths_array| paths_array.len())
+				.unwrap_or(0) as u32,
 		}
 	}
 }
