@@ -292,3 +292,16 @@ impl_client!(Cnb, nipaw_cnb::CnbClient);
 impl_client!(Gitee, nipaw_gitee::GiteeClient);
 impl_client!(Github, nipaw_github::GitHubClient);
 impl_client!(GitCode, nipaw_gitcode::GitCodeClient);
+
+#[napi]
+impl GithubClient {
+	#[napi]
+	/// 设置反向代理
+	///
+	/// ## 参数
+	/// - `url` - 反向代理地址, 反代地址需要同时支持`github.com`和`api.github.com`
+	pub async fn set_reverse_proxy(&self, url: String) {
+		let mut client = create_client_github().await;
+		client.set_reverse_proxy(url.as_str())
+	}
+}

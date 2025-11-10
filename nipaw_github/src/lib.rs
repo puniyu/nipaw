@@ -27,17 +27,51 @@ use reqwest::{Url, header};
 use serde_json::Value;
 use std::collections::HashMap;
 
-const API_URL: &str = "https://api.github.com";
-const BASE_URL: &str = "https://github.com";
+#[derive(Debug, Clone)]
+pub struct GitHubConfig {
+	pub api_url: String,
+	pub base_url: String,
+}
+
+impl Default for GitHubConfig {
+	fn default() -> Self {
+		Self {
+			api_url: "https://api.github.com".to_string(),
+			base_url: "https://github.com".to_string(),
+		}
+	}
+}
+
+impl GitHubConfig {
+	/// 设置 GitHub API 的 URL
+	pub fn set_api_url(&mut self, api_url: String) {
+		self.api_url = api_url;
+	}
+
+	/// 设置 GitHub 基础 URL
+	pub fn set_base_url(&mut self, base_url: String) {
+		self.base_url = base_url;
+	}
+}
 
 #[derive(Debug, Default)]
 pub struct GitHubClient {
 	pub token: Option<String>,
+	config: GitHubConfig,
 }
 
 impl GitHubClient {
 	pub fn new() -> Self {
 		Self::default()
+	}
+
+	/// 设置反向代理
+	pub fn set_reverse_proxy(&mut self, url: &str) {
+		let clean_url = url.trim_end_matches('/');
+		let api_url = format!("{}/{}", clean_url, self.config.api_url);
+		let base_url = format!("{}/{}", clean_url, self.config.base_url);
+		self.config.set_api_url(api_url);
+		self.config.set_base_url(base_url);
 	}
 }
 
@@ -60,7 +94,8 @@ impl Client for GitHubClient {
 		if self.token.is_none() {
 			return Err(Error::TokenEmpty);
 		}
-		let url = format!("{}/user", API_URL);
+		let api_url = self.config.api_url.as_str();
+		let url = format!("{}/user", api_url);
 		let request = HTTP_CLIENT.get(url).bearer_auth(self.token.as_ref().unwrap());
 		let resp = request.send().await?;
 		let user_info: JsonValue = resp.json().await?;
@@ -68,7 +103,8 @@ impl Client for GitHubClient {
 	}
 
 	async fn get_user_info_with_name(&self, user_name: &str) -> Result<UserInfo> {
-		let url = format!("{}/users/{}", API_URL, user_name);
+		let api_url = self.config.api_url.as_str();
+		let url = format!("{}/users/{}", api_url, user_name);
 		let mut request = HTTP_CLIENT.get(url);
 		if let Some(token) = &self.token {
 			request = request.bearer_auth(token);
@@ -79,7 +115,8 @@ impl Client for GitHubClient {
 	}
 
 	async fn get_user_avatar_url(&self, user_name: &str) -> Result<String> {
-		let url = format!("{}/{}", BASE_URL, user_name);
+		let base_url = self.config.base_url.as_str();
+		let url = format!("{}/{}", base_url, user_name);
 		let request = HTTP_CLIENT.get(url).header("Accept", "image/*");
 		let resp = request.send().await?;
 		let html: Html = Html::from(resp.text().await?);
@@ -98,7 +135,8 @@ impl Client for GitHubClient {
 	}
 
 	async fn get_user_contribution(&self, user_name: &str) -> Result<ContributionResult> {
-		let mut url = Url::parse(&format!("{}/{}", BASE_URL, user_name))?;
+		let base_url = self.config.base_url.as_str();
+		let mut url = Url::parse(&format!("{}/{}", base_url, user_name))?;
 		url.query_pairs_mut()
 			.append_pair("action", "show")
 			.append_pair("controller", "profiles")
@@ -115,7 +153,8 @@ impl Client for GitHubClient {
 	}
 
 	async fn get_org_info(&self, org_name: &str) -> Result<OrgInfo> {
-		let url = format!("{}/orgs/{}", API_URL, org_name);
+		let api_url = self.config.api_url.as_str();
+		let url = format!("{}/orgs/{}", api_url, org_name);
 		let mut request = HTTP_CLIENT.get(url);
 		if let Some(token) = &self.token {
 			request = request.bearer_auth(token);
@@ -130,7 +169,8 @@ impl Client for GitHubClient {
 		org_name: &str,
 		option: Option<OrgRepoListOptions>,
 	) -> Result<Vec<RepoInfo>> {
-		let url = format!("{}/orgs/{}/repos", API_URL, org_name);
+		let api_url = self.config.api_url.as_str();
+		let url = format!("{}/orgs/{}/repos", api_url, org_name);
 		let mut request = HTTP_CLIENT.get(url);
 		let mut params = HashMap::new();
 		if let Some(token) = &self.token {
@@ -148,7 +188,8 @@ impl Client for GitHubClient {
 	}
 
 	async fn get_org_avatar_url(&self, org_name: &str) -> Result<String> {
-		let url = format!("{}/orgs/{}", API_URL, org_name);
+		let api_url = self.config.api_url.as_str();
+		let url = format!("{}/orgs/{}", api_url, org_name);
 		let request = HTTP_CLIENT.get(url);
 		let resp = request.send().await?;
 		let org_html = resp.text().await?;
@@ -162,7 +203,8 @@ impl Client for GitHubClient {
 	}
 
 	async fn get_repo_info(&self, repo_path: (&str, &str)) -> Result<RepoInfo> {
-		let url = format!("{}/repos/{}/{}", API_URL, repo_path.0, repo_path.1);
+		let api_url = self.config.api_url.as_str();
+		let url = format!("{}/repos/{}/{}", api_url, repo_path.0, repo_path.1);
 		let mut request = HTTP_CLIENT.get(url);
 		if let Some(token) = &self.token {
 			request = request.bearer_auth(token);
@@ -173,7 +215,8 @@ impl Client for GitHubClient {
 	}
 
 	async fn get_user_repos(&self, option: Option<ReposListOptions>) -> Result<Vec<RepoInfo>> {
-		let url = format!("{}/user/repos", API_URL);
+		let api_url = self.config.api_url.as_str();
+		let url = format!("{}/user/repos", api_url);
 		let mut request = HTTP_CLIENT.get(url);
 		let mut params: HashMap<&str, String> = HashMap::new();
 		if let Some(token) = &self.token {
@@ -198,7 +241,8 @@ impl Client for GitHubClient {
 		user_name: &str,
 		option: Option<ReposListOptions>,
 	) -> Result<Vec<RepoInfo>> {
-		let url = format!("{}/users/{}/repos", API_URL, user_name);
+		let api_url = self.config.api_url.as_str();
+		let url = format!("{}/users/{}/repos", api_url, user_name);
 		let mut request = HTTP_CLIENT.get(url);
 		let mut params: HashMap<&str, String> = HashMap::new();
 		if let Some(token) = &self.token {
@@ -222,9 +266,10 @@ impl Client for GitHubClient {
 		repo_path: (&str, &str),
 		sha: Option<&str>,
 	) -> Result<CommitInfo> {
+		let api_url = self.config.api_url.as_str();
 		let url = format!(
 			"{}/repos/{}/{}/commits/{}",
-			API_URL,
+			api_url,
 			repo_path.0,
 			repo_path.1,
 			sha.unwrap_or("HEAD")
@@ -275,7 +320,8 @@ impl Client for GitHubClient {
 		repo_path: (&str, &str),
 		option: Option<CommitListOptions>,
 	) -> Result<Vec<CommitInfo>> {
-		let url = format!("{}/repos/{}/{}/commits", API_URL, repo_path.0, repo_path.1);
+		let api_url = self.config.api_url.as_str();
+		let url = format!("{}/repos/{}/{}/commits", api_url, repo_path.0, repo_path.1);
 		let mut request = HTTP_CLIENT.get(url);
 		let mut params: HashMap<&str, String> = HashMap::new();
 		if let Some(token) = &self.token {
@@ -311,9 +357,10 @@ impl Client for GitHubClient {
 		user_name: &str,
 		permission: Option<CollaboratorPermission>,
 	) -> Result<CollaboratorResult> {
+		let api_url = self.config.api_url.as_str();
 		let url = format!(
 			"{}/repos/{}/{}/collaborators/{}",
-			API_URL, repo_path.0, repo_path.1, user_name
+			api_url, repo_path.0, repo_path.1, user_name
 		);
 		let mut request = HTTP_CLIENT.put(url);
 		if let Some(token) = &self.token {
@@ -350,7 +397,8 @@ impl Client for GitHubClient {
 		if self.token.is_none() {
 			return Err(Error::TokenEmpty);
 		}
-		let url = format!("{}/repos/{}/{}/issues", API_URL, repo_path.0, repo_path.1);
+		let api_url = self.config.api_url.as_str();
+		let url = format!("{}/repos/{}/{}/issues", api_url, repo_path.0, repo_path.1);
 		let request = HTTP_CLIENT.put(url).query(&[("access_token", self.token.as_ref().unwrap())]);
 		let mut req_body: HashMap<&str, String> = HashMap::new();
 		req_body.insert("title", title.to_string());
