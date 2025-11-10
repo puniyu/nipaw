@@ -1,6 +1,9 @@
 use crate::{
 	Result,
-	option::{CommitListOptions, CreateIssueOptions, OrgRepoListOptions, ReposListOptions},
+	option::{
+		CommitListOptions, CreateIssueOptions, IssueListOptions, OrgRepoListOptions,
+		ReposListOptions,
+	},
 	types::{
 		collaborator::{CollaboratorPermission, CollaboratorResult},
 		commit::CommitInfo,
@@ -14,7 +17,7 @@ use async_trait::async_trait;
 
 #[async_trait]
 pub trait Client: Send + Sync {
-	/// 设置token
+	/// 设置访问令牌
 	///
 	/// # 参数
 	///
@@ -160,6 +163,7 @@ pub trait Client: Send + Sync {
 	/// - `title` - issue标题
 	/// - `body` - issue内容
 	/// - `option` - 创建issue选项, 详见 [CreateIssueOptions]
+	///
 	async fn create_issue(
 		&self,
 		repo_path: (&str, &str),
@@ -167,4 +171,26 @@ pub trait Client: Send + Sync {
 		body: Option<&str>,
 		option: Option<CreateIssueOptions>,
 	) -> Result<IssueInfo>;
+
+	/// 获取issue信息
+	///
+	/// ## 参数
+	/// - `repo_path` - 仓库路径，格式为 `(owner, repo)`
+	/// - `issue_number` - issue编号
+	///
+	async fn get_issue_info(
+		&self,
+		repo_path: (&str, &str),
+		issue_number: String,
+	) -> Result<IssueInfo>;
+
+	/// 获取仓库所有issue信息
+	///
+	/// ## 参数
+	/// - `repo_path` - 仓库路径，格式为 `(owner, repo)`
+	async fn get_issue_list(
+		&self,
+		repo_path: (&str, &str),
+		options: Option<IssueListOptions>,
+	) -> Result<Vec<IssueInfo>>;
 }

@@ -1,3 +1,4 @@
+use crate::types::issue::StateType;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -77,4 +78,22 @@ pub struct CreateIssueOptions {
 	pub labels: Vec<String>,
 	/// 分配的用户名
 	pub assignees: Vec<String>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Default)]
+pub struct IssueListOptions {
+	/// 每页数量，默认 30，最大 100
+	#[serde(default = "default_per_page")]
+	pub per_page: Option<u32>,
+	/// 页码，默认 1
+	#[serde(default = "default_page")]
+	pub page: Option<u32>,
+	/// 标签
+	pub labels: Vec<String>,
+	/// 创建者
+	pub creator: Option<String>,
+	/// 分配的用户名
+	pub assignee: Option<String>,
+	/// 状态
+	pub state: Option<StateType>,
 }

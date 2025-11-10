@@ -9,15 +9,17 @@ use crate::{
 	common::{Html, JsonValue},
 };
 use async_trait::async_trait;
-use nipaw_core::option::CreateIssueOptions;
-use nipaw_core::types::issue::IssueInfo;
 use nipaw_core::{
 	Result,
 	error::Error,
-	option::{CommitListOptions, OrgRepoListOptions, ReposListOptions},
+	option::{
+		CommitListOptions, CreateIssueOptions, IssueListOptions, OrgRepoListOptions,
+		ReposListOptions,
+	},
 	types::{
 		collaborator::{CollaboratorPermission, CollaboratorResult},
 		commit::CommitInfo,
+		issue::{IssueInfo, StateType},
 		org::OrgInfo,
 		repo::RepoInfo,
 		user::{ContributionResult, UserInfo},
@@ -27,12 +29,33 @@ use reqwest::header;
 use serde_json::Value;
 use std::collections::HashMap;
 
-const API_URL: &str = "https://gitee.com/api/v5";
-const BASE_URL: &str = "https://gitee.com";
+#[derive(Debug)]
+pub(crate) struct GiteeConfig {
+	pub(crate) token: Option<String>,
+	pub(crate) base_url: String,
+	pub(crate) api_url: String,
+}
+
+impl Default for GiteeConfig {
+	fn default() -> Self {
+		Self {
+			token: None,
+			base_url: "https://gitee.com".to_string(),
+			api_url: "https://gitee.com/api/v5".to_string(),
+		}
+	}
+}
+
+impl GiteeConfig {
+	/// 设置访问令牌
+	pub fn set_token(&mut self, token: &str) {
+		self.token = Some(token.to_string());
+	}
+}
 
 #[derive(Debug, Default)]
 pub struct GiteeClient {
-	pub token: Option<String>,
+	pub(crate) config: GiteeConfig,
 }
 
 impl GiteeClient {
@@ -47,7 +70,7 @@ impl Client for GiteeClient {
 		if token.is_empty() {
 			return Err(Error::TokenEmpty);
 		}
-		self.token = Some(token.to_string());
+		self.config.set_token(token);
 		Ok(())
 	}
 
@@ -57,12 +80,13 @@ impl Client for GiteeClient {
 	}
 
 	async fn get_user_info(&self) -> Result<UserInfo> {
-		if self.token.is_none() {
+		let (token, api_url) = (&self.config.token, &self.config.api_url);
+		if token.is_none() {
 			return Err(Error::TokenEmpty);
 		}
-		let url = format!("{}/user", API_URL);
+		let url = format!("{}/user", api_url);
 		let request =
-			HTTP_CLIENT.get(url).query(&[("access_token", self.token.as_ref().unwrap().as_str())]);
+			HTTP_CLIENT.get(url).query(&[("access_token", token.as_ref().unwrap().as_str())]);
 
 		let resp = request.send().await?;
 		let user_info: JsonValue = resp.json().await?;
@@ -70,9 +94,10 @@ impl Client for GiteeClient {
 	}
 
 	async fn get_user_info_with_name(&self, user_name: &str) -> Result<UserInfo> {
-		let url = format!("{}/users/{}", API_URL, user_name);
+		let (token, api_url) = (&self.config.token, &self.config.api_url);
+		let url = format!("{}/users/{}", api_url, user_name);
 		let mut request = HTTP_CLIENT.get(url);
-		if let Some(token) = &self.token {
+		if let Some(token) = token {
 			request = request.query(&[("access_token", token.as_str())]);
 		}
 		let resp = request.send().await?;
@@ -81,8 +106,9 @@ impl Client for GiteeClient {
 	}
 
 	async fn get_user_avatar_url(&self, user_name: &str) -> Result<String> {
-		let url = format!("{}/users/{}/detail", BASE_URL, user_name);
-		let request = HTTP_CLIENT.get(url).header("Referer", BASE_URL);
+		let base_url = &self.config.base_url;
+		let url = format!("{}/users/{}/detail", base_url, user_name);
+		let request = HTTP_CLIENT.get(url).header("Referer", base_url);
 		let resp = request.send().await?;
 		let user_info: JsonValue = resp.json().await?;
 		let avatar_url = user_info
@@ -96,7 +122,8 @@ impl Client for GiteeClient {
 	}
 
 	async fn get_user_contribution(&self, user_name: &str) -> Result<ContributionResult> {
-		let url = format!("{}/{}", BASE_URL, user_name);
+		let base_url = &self.config.base_url;
+		let url = format!("{}/{}", base_url, user_name);
 		let request = HTTP_CLIENT
 			.get(url)
 			.header("X-Requested-With", "XMLHttpRequest")
@@ -107,9 +134,10 @@ impl Client for GiteeClient {
 	}
 
 	async fn get_org_info(&self, org_name: &str) -> Result<OrgInfo> {
-		let url = format!("{}/orgs/{}", BASE_URL, org_name);
+		let (token, base_url) = (&self.config.token, &self.config.base_url);
+		let url = format!("{}/orgs/{}", base_url, org_name);
 		let mut request = HTTP_CLIENT.get(url);
-		if let Some(token) = &self.token {
+		if let Some(token) = token {
 			request = request.query(&[("access_token", token.as_str())]);
 		}
 		let resp = request.send().await?;
@@ -122,10 +150,11 @@ impl Client for GiteeClient {
 		org_name: &str,
 		options: Option<OrgRepoListOptions>,
 	) -> Result<Vec<RepoInfo>> {
-		let url = format!("{}/orgs/{}/repos", API_URL, org_name);
+		let (token, api_url) = (&self.config.token, &self.config.api_url);
+		let url = format!("{}/orgs/{}/repos", api_url, org_name);
 		let mut request = HTTP_CLIENT.get(url);
 		let mut params = HashMap::new();
-		if let Some(token) = &self.token {
+		if let Some(token) = token {
 			request = request.query(&[("access_token", token.as_str())]);
 		}
 		if let Some(option) = options {
@@ -140,7 +169,8 @@ impl Client for GiteeClient {
 	}
 
 	async fn get_org_avatar_url(&self, org_name: &str) -> Result<String> {
-		let url = format!("{}/{}", BASE_URL, org_name);
+		let base_url = &self.config.base_url;
+		let url = format!("{}/{}", base_url, org_name);
 		let request = HTTP_CLIENT.get(url);
 		let resp = request.send().await?;
 		let org_html: String = resp.text().await?;
@@ -155,9 +185,10 @@ impl Client for GiteeClient {
 	}
 
 	async fn get_repo_info(&self, repo_path: (&str, &str)) -> Result<RepoInfo> {
-		let url = format!("{}/repos/{}/{}", API_URL, repo_path.0, repo_path.1);
+		let (token, api_url) = (&self.config.token, &self.config.api_url);
+		let url = format!("{}/repos/{}/{}", api_url, repo_path.0, repo_path.1);
 		let mut request = HTTP_CLIENT.get(url);
-		if let Some(token) = &self.token {
+		if let Some(token) = token {
 			request = request.query(&[("access_token", token.as_str())]);
 		}
 		let resp = request.send().await?;
@@ -166,10 +197,11 @@ impl Client for GiteeClient {
 	}
 
 	async fn get_user_repos(&self, option: Option<ReposListOptions>) -> Result<Vec<RepoInfo>> {
-		let url = format!("{}/user/repos", API_URL);
+		let (token, api_url) = (&self.config.token, &self.config.api_url);
+		let url = format!("{}/user/repos", api_url);
 		let request = HTTP_CLIENT.get(url);
 		let mut params: HashMap<&str, String> = HashMap::new();
-		if let Some(token) = &self.token {
+		if let Some(token) = token {
 			params.insert("access_token", token.to_owned());
 		}
 
@@ -191,10 +223,11 @@ impl Client for GiteeClient {
 		user_name: &str,
 		option: Option<ReposListOptions>,
 	) -> Result<Vec<RepoInfo>> {
-		let url = format!("{}/users/{}/repos", API_URL, user_name);
+		let (token, api_url) = (&self.config.token, &self.config.api_url);
+		let url = format!("{}/users/{}/repos", api_url, user_name);
 		let request = HTTP_CLIENT.get(url);
 		let mut params: HashMap<&str, String> = HashMap::new();
-		if let Some(token) = &self.token {
+		if let Some(token) = token {
 			params.insert("access_token", token.to_owned());
 		};
 		params.insert("sort", "pushed".to_string());
@@ -215,15 +248,16 @@ impl Client for GiteeClient {
 		repo_path: (&str, &str),
 		sha: Option<&str>,
 	) -> Result<CommitInfo> {
+		let (token, api_url) = (&self.config.token, &self.config.api_url);
 		let url = format!(
 			"{}/repos/{}/{}/commits/{}",
-			API_URL,
+			api_url,
 			repo_path.0,
 			repo_path.1,
 			sha.unwrap_or("HEAD")
 		);
 		let mut request = HTTP_CLIENT.get(url);
-		if let Some(token) = &self.token {
+		if let Some(token) = token {
 			request = request.query(&[("access_token", token.as_str())]);
 		}
 		let resp = request.send().await?;
@@ -269,10 +303,11 @@ impl Client for GiteeClient {
 		repo_path: (&str, &str),
 		option: Option<CommitListOptions>,
 	) -> Result<Vec<CommitInfo>> {
-		let url = format!("{}/repos/{}/{}/commits", API_URL, repo_path.0, repo_path.1);
+		let (token, api_url) = (&self.config.token, &self.config.api_url);
+		let url = format!("{}/repos/{}/{}/commits", api_url, repo_path.0, repo_path.1);
 		let request = HTTP_CLIENT.get(url);
 		let mut params: HashMap<&str, String> = HashMap::new();
-		if let Some(token) = &self.token {
+		if let Some(token) = token {
 			params.insert("access_token", token.to_owned());
 		}
 
@@ -305,12 +340,13 @@ impl Client for GiteeClient {
 		user_name: &str,
 		permission: Option<CollaboratorPermission>,
 	) -> Result<CollaboratorResult> {
-		if self.token.is_none() {
+		let (token, api_url) = (&self.config.token, &self.config.api_url);
+		if token.is_none() {
 			return Err(Error::TokenEmpty);
 		}
 		let url = format!(
 			"{}/repos/{}/{}/collaborators/{}",
-			API_URL, repo_path.0, repo_path.1, user_name
+			api_url, repo_path.0, repo_path.1, user_name
 		);
 		let request = HTTP_CLIENT.put(url);
 
@@ -324,7 +360,7 @@ impl Client for GiteeClient {
 		};
 
 		let body = serde_json::json!({
-			"access_token": self.token.as_ref().unwrap(),
+			"access_token": token.as_ref().unwrap(),
 			"permission": permission,
 		});
 
@@ -345,11 +381,12 @@ impl Client for GiteeClient {
 		body: Option<&str>,
 		option: Option<CreateIssueOptions>,
 	) -> Result<IssueInfo> {
-		if self.token.is_none() {
+		let (token, api_url) = (&self.config.token, &self.config.api_url);
+		if token.is_none() {
 			return Err(Error::TokenEmpty);
 		}
-		let url = format!("{}/repos/{}/{}/issues", API_URL, repo_path.0, repo_path.1);
-		let request = HTTP_CLIENT.put(url).query(&[("access_token", self.token.as_ref().unwrap())]);
+		let url = format!("{}/repos/{}/{}/issues", api_url, repo_path.0, repo_path.1);
+		let request = HTTP_CLIENT.put(url).query(&[("access_token", token.as_ref().unwrap())]);
 		let mut req_body: HashMap<&str, String> = HashMap::new();
 		req_body.insert("title", title.to_string());
 		if let Some(body) = body {
@@ -365,5 +402,59 @@ impl Client for GiteeClient {
 		};
 		let res = request.json(&req_body).send().await?.json::<JsonValue>().await?;
 		Ok(res.into())
+	}
+
+	async fn get_issue_info(
+		&self,
+		repo_path: (&str, &str),
+		issue_number: String,
+	) -> Result<IssueInfo> {
+		let (token, api_url) = (&self.config.token, &self.config.api_url);
+		let url =
+			format!("{}/repos/{}/{}/issues/{}", api_url, repo_path.0, repo_path.1, issue_number);
+		let mut request = HTTP_CLIENT.get(url);
+		if let Some(token) = token {
+			request = request.query(&[("access_token", token)]);
+		};
+		let res = request.send().await?.json::<JsonValue>().await?;
+		Ok(res.into())
+	}
+
+	async fn get_issue_list(
+		&self,
+		repo_path: (&str, &str),
+		options: Option<IssueListOptions>,
+	) -> Result<Vec<IssueInfo>> {
+		let (token, api_url) = (&self.config.token, &self.config.api_url);
+		let url = format!("{}/repos/{}/{}/issues", api_url, repo_path.0, repo_path.1);
+		let mut request = HTTP_CLIENT.get(url);
+		if let Some(token) = token {
+			request = request.query(&[("access_token", token)]);
+		};
+		let mut params: HashMap<&str, String> = HashMap::new();
+		if let Some(option) = options {
+			let per_page = option.per_page.unwrap_or_default().max(100);
+			params.insert("per_page", per_page.to_string());
+			let page = option.page.unwrap_or_default();
+			params.insert("page", page.to_string());
+			if !option.labels.is_empty() {
+				params.insert("labels", option.labels.join(","));
+			}
+			if let Some(state) = option.state {
+				let state_type = match state {
+					StateType::Opened => "open",
+					StateType::Closed => "closed",
+				};
+				params.insert("state", state_type.to_string());
+			}
+			if let Some(assignee) = option.assignee {
+				params.insert("assignee", assignee);
+			}
+			if let Some(creator) = option.creator {
+				params.insert("creator", creator);
+			}
+		};
+		let res = request.query(&params).send().await?.json::<Vec<JsonValue>>().await?;
+		Ok(res.into_iter().map(|v| v.into()).collect())
 	}
 }

@@ -1,9 +1,9 @@
-use crate::BASE_URL;
+use crate::CnbConfig;
 use chrono::{NaiveDate, Utc, Weekday};
 use itertools::Itertools;
-use nipaw_core::types::issue::StateType;
 use nipaw_core::types::{
 	commit::{self, CommitData, CommitInfo, StatsInfo},
+	issue::StateType,
 	issue::{self, IssueInfo},
 	org::OrgInfo,
 	repo::{RepoInfo, Visibility},
@@ -12,17 +12,17 @@ use nipaw_core::types::{
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-#[derive(Serialize, Deserialize)]
-pub struct JsonValue(pub(crate) Value);
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub(crate) struct JsonValue(pub(crate) Value);
 impl From<JsonValue> for UserInfo {
 	fn from(json_value: JsonValue) -> Self {
 		let user_info = json_value.0;
 		let login = user_info.get("username").and_then(|v| v.as_str()).unwrap();
+		let base_url = "https://cnb.cool";
 		Self {
-			id: user_info.get("id").and_then(|v| v.as_str()).unwrap().to_string(),
 			login: login.to_string(),
 			name: user_info.get("nickname").and_then(|v| v.as_str()).map(|s| s.to_string()),
-			avatar_url: user_info.get("avatar_url").and_then(|v| v.as_str()).unwrap().to_string(),
+			avatar_url: format!("{}/{}", base_url, login),
 			email: user_info.get("email").and_then(|v| v.as_str()).map(|s| s.to_string()),
 			followers: user_info.get("follower_count").and_then(|v| v.as_u64()).unwrap(),
 			following: user_info.get("follow_count").and_then(|v| v.as_u64()).unwrap(),
@@ -41,7 +41,6 @@ impl From<JsonValue> for RepoInfo {
 			.unwrap_or(false);
 
 		Self {
-			id: repo_info.get("id").and_then(|v| v.as_str()).unwrap().to_string(),
 			owner: repo_info
 				.get("owner")
 				.and_then(|v| v.get("login"))
@@ -192,7 +191,6 @@ impl From<JsonValue> for OrgInfo {
 	fn from(json_value: JsonValue) -> Self {
 		let org_info = json_value.0;
 		Self {
-			id: org_info.get("id").and_then(|v| v.as_u64()).unwrap(),
 			login: org_info.get("login").and_then(|v| v.as_str()).unwrap().to_string(),
 			name: org_info.get("name").and_then(|v| v.as_str()).map(|s| s.to_string()),
 			email: org_info.get("email").and_then(|v| v.as_str()).map(|s| s.to_string()),
@@ -214,7 +212,6 @@ impl From<JsonValue> for IssueInfo {
 		let user_info = issue_info.get("user").unwrap().clone();
 		let labels_info = issue_info.get("labels").unwrap().clone();
 		Self {
-			id: issue_info.get("id").and_then(|v| v.as_u64()).unwrap(),
 			number: issue_info.get("number").and_then(|v| v.as_str()).unwrap().to_string(),
 			state: if is_open { StateType::Opened } else { StateType::Closed },
 			title: issue_info.get("title").and_then(|v| v.as_str()).unwrap().to_string(),
@@ -246,10 +243,11 @@ impl From<JsonValue> for IssueInfo {
 impl From<JsonValue> for issue::UserInfo {
 	fn from(user: JsonValue) -> Self {
 		let user_info = user.0;
-		let name = user_info.get("username").and_then(|v| v.as_str()).unwrap().to_string();
+		let name = user_info.get("login").and_then(|v| v.as_str()).unwrap().to_string();
+		let base_url = CnbConfig::default().base_url;
 		Self {
 			name: user_info.get("name").and_then(|v| v.as_str()).unwrap().to_string(),
-			avatar_url: format!("{}/users/{}/avatar/l", BASE_URL, name),
+			avatar_url: format!("{}/users/{}/avatar/l", base_url, name),
 			email: Some(user_info.get("email").and_then(|v| v.as_str()).unwrap().to_string()),
 		}
 	}

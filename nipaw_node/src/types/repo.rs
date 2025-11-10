@@ -6,8 +6,6 @@ use strum::{Display, EnumString, IntoStaticStr};
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[napi(object)]
 pub struct RepoInfo {
-	/// 仓库id
-	pub id: String,
 	/// 仓库所有者
 	pub owner: String,
 	/// 仓库名称
@@ -38,8 +36,7 @@ pub struct RepoInfo {
 
 impl From<nipaw_core::types::repo::RepoInfo> for RepoInfo {
 	fn from(repo_info: nipaw_core::types::repo::RepoInfo) -> Self {
-		RepoInfo {
-			id: repo_info.id,
+		Self {
 			owner: repo_info.owner,
 			name: repo_info.name,
 			full_name: repo_info.full_name,

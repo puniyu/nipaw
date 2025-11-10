@@ -3,8 +3,6 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct UserInfo {
-	/// 用户Id
-	pub id: String,
 	/// 登录用户名
 	pub login: String,
 	/// 用户昵称

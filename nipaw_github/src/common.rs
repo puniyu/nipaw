@@ -21,7 +21,6 @@ impl From<JsonValue> for UserInfo {
 	fn from(json_value: JsonValue) -> Self {
 		let user_info = json_value.0;
 		Self {
-			id: user_info.get("id").and_then(|v| v.as_u64()).unwrap().to_string(),
 			login: user_info.get("login").and_then(|v| v.as_str()).unwrap().to_string(),
 			name: user_info.get("name").and_then(|v| v.as_str()).map(|s| s.to_string()),
 			avatar_url: user_info.get("avatar_url").and_then(|v| v.as_str()).unwrap().to_string(),
@@ -49,7 +48,6 @@ impl From<JsonValue> for RepoInfo {
 			.to_string();
 		let name = repo_info.get("name").and_then(|v| v.as_str()).unwrap().to_string();
 		Self {
-			id: repo_info.get("id").and_then(|v| v.as_u64()).unwrap().to_string(),
 			owner: owner.clone(),
 			name: name.clone(),
 			full_name: format!("{}/{}", owner, name),
@@ -226,7 +224,6 @@ impl From<JsonValue> for OrgInfo {
 	fn from(value: JsonValue) -> Self {
 		let org_info = value.0;
 		Self {
-			id: org_info.get("id").and_then(|v| v.as_u64()).unwrap(),
 			login: org_info.get("login").and_then(|v| v.as_str()).unwrap().to_string(),
 			name: org_info.get("name").and_then(|v| v.as_str()).map(|s| s.to_string()),
 			email: org_info.get("email").and_then(|v| v.as_str()).map(|s| s.to_string()),
@@ -270,8 +267,7 @@ impl From<JsonValue> for IssueInfo {
 		let user_info = issue_info.get("user").unwrap().clone();
 		let labels_info = issue_info.get("labels").unwrap().clone();
 		Self {
-			id: issue_info.get("id").and_then(|v| v.as_u64()).unwrap(),
-			number: issue_info.get("number").and_then(|v| v.as_str()).unwrap().to_string(),
+			number: issue_info.get("number").and_then(|v| v.as_u64()).unwrap().to_string(),
 			state: if is_open { StateType::Opened } else { StateType::Closed },
 			title: issue_info.get("title").and_then(|v| v.as_str()).unwrap().to_string(),
 			body: issue_info.get("body").and_then(|v| v.as_str()).map(|s| s.to_string()),
@@ -303,7 +299,7 @@ impl From<JsonValue> for issue::UserInfo {
 	fn from(user: JsonValue) -> Self {
 		let user_info = user.0;
 		Self {
-			name: user_info.get("name").and_then(|v| v.as_str()).unwrap().to_string(),
+			name: user_info.get("login").and_then(|v| v.as_str()).unwrap().to_string(),
 			avatar_url: user_info.get("avatar_url").and_then(|v| v.as_str()).unwrap().to_string(),
 			email: user_info.get("email").and_then(|v| v.as_str()).map(|s| s.to_string()),
 		}
@@ -315,7 +311,7 @@ impl From<JsonValue> for issue::LabelInfo {
 		let label_info = label.0;
 		Self {
 			name: label_info.get("name").and_then(|v| v.as_str()).unwrap().to_string(),
-			color: label_info.get("color").and_then(|v| v.as_str()).unwrap().to_string(),
+			color: format!("#{}", label_info.get("color").and_then(|v| v.as_str()).unwrap()),
 		}
 	}
 }

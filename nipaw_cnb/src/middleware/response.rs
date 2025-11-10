@@ -13,10 +13,10 @@ struct ErrorResponse {
 	detail: String,
 }
 
-pub struct AuthMiddleware;
+pub struct ResponseMiddleware;
 
 #[async_trait]
-impl Middleware for AuthMiddleware {
+impl Middleware for ResponseMiddleware {
 	async fn handle(
 		&self,
 		req: Request,

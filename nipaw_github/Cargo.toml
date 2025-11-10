@@ -24,3 +24,4 @@ nipaw_core = { path = "../nipaw_core", version = "0.10.1" }
 
 scraper = "=0.24.0"
 
+

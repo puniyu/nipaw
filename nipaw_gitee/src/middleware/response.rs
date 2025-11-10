@@ -5,7 +5,7 @@ use reqwest::{Request, Response, StatusCode};
 use reqwest_middleware::{Error, Middleware, Next, Result};
 use serde::Deserialize;
 
-pub struct AuthMiddleware;
+pub struct ResponseMiddleware;
 
 #[allow(dead_code)]
 #[derive(Debug, Deserialize)]
@@ -14,7 +14,7 @@ struct ErrorResponse {
 }
 
 #[async_trait]
-impl Middleware for AuthMiddleware {
+impl Middleware for ResponseMiddleware {
 	async fn handle(
 		&self,
 		req: Request,

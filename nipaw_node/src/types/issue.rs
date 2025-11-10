@@ -6,8 +6,6 @@ use strum::{Display, EnumString, IntoStaticStr};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[napi(object)]
 pub struct IssueInfo {
-	/// 议题Id
-	pub id: u32,
 	/// 议题编号
 	pub number: String,
 	/// 议题状态
@@ -81,7 +79,6 @@ impl From<nipaw_core::types::issue::LabelInfo> for LabelInfo {
 impl From<nipaw_core::types::issue::IssueInfo> for IssueInfo {
 	fn from(value: nipaw_core::types::issue::IssueInfo) -> Self {
 		Self {
-			id: value.id as u32,
 			number: value.number,
 			state: value.state.into(),
 			title: value.title,

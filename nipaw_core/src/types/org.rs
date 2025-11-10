@@ -2,8 +2,6 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OrgInfo {
-	/// 组织id
-	pub id: u64,
 	/// 登录名
 	pub login: String,
 	/// 组织名
