@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 use http::Extensions;
 use nipaw_core::Error as CoreError;
 use reqwest::{Request, Response, StatusCode};
@@ -8,15 +9,16 @@ use serde::Deserialize;
 #[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 struct ErrorResponse {
-	status: String,
-	message: String,
-	documentation_url: String,
+	timestamp: DateTime<Utc>,
+	status: u16,
+	error: String,
+	path: String,
 }
 
-pub struct AuthMiddleware;
+pub struct ResponseMiddleware;
 
 #[async_trait]
-impl Middleware for AuthMiddleware {
+impl Middleware for ResponseMiddleware {
 	async fn handle(
 		&self,
 		req: Request,
@@ -29,22 +31,10 @@ impl Middleware for AuthMiddleware {
 			StatusCode::UNAUTHORIZED => Err(Error::Middleware(CoreError::Unauthorized.into())),
 			StatusCode::NOT_FOUND => Err(Error::Middleware(CoreError::NotFound.into())),
 			StatusCode::FORBIDDEN => {
-				let message = res.json::<ErrorResponse>().await?.message;
+				let message = res.json::<ErrorResponse>().await?.error;
 				Err(Error::Middleware(CoreError::Forbidden(message).into()))
 			}
-			StatusCode::TOO_MANY_REQUESTS => {
-				let is_rate_limited = res
-					.headers()
-					.get("x-ratelimit-remaining")
-					.and_then(|value| value.to_str().ok())
-					.map(|value| value == "0")
-					.unwrap_or(false);
-				if is_rate_limited {
-					Err(Error::Middleware(CoreError::RateLimit.into()))
-				} else {
-					Ok(res)
-				}
-			}
+			StatusCode::TOO_MANY_REQUESTS => Err(Error::Middleware(CoreError::RateLimit.into())),
 			_ => Ok(res),
 		}
 	}

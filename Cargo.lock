@@ -843,6 +843,7 @@ version = "0.10.1"
 dependencies = [
  "async-trait",
  "chrono",
+ "futures",
  "http",
  "itertools",
  "nipaw_core",

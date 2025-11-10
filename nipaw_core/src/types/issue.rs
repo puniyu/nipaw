@@ -4,8 +4,6 @@ use strum::{Display, EnumString, IntoStaticStr};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IssueInfo {
-	/// 议题Id
-	pub id: u64,
 	/// 议题编号
 	pub number: String,
 	/// 议题状态

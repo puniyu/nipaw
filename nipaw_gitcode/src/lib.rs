@@ -9,32 +9,55 @@ use crate::{
 	common::JsonValue,
 };
 use async_trait::async_trait;
-use http::header;
-use nipaw_core::option::CreateIssueOptions;
-use nipaw_core::types::issue::IssueInfo;
 use nipaw_core::{
 	CollaboratorPermission, Result,
 	error::Error,
-	option::{CommitListOptions, OrgRepoListOptions, ReposListOptions},
+	option::{
+		CommitListOptions, CreateIssueOptions, IssueListOptions, OrgRepoListOptions,
+		ReposListOptions,
+	},
 	types::{
 		collaborator::CollaboratorResult,
 		commit::CommitInfo,
+		issue::{IssueInfo, StateType},
 		org::OrgInfo,
 		repo::RepoInfo,
 		user::{ContributionResult, UserInfo},
 	},
 };
-use reqwest::Url;
 use serde_json::Value;
 use std::collections::HashMap;
+use std::fmt::Debug;
 
-const API_URL: &str = "https://api.gitcode.com/api/v5";
-const BASE_URL: &str = "https://gitcode.com";
-const WEB_API_URL: &str = "https://web-api.gitcode.com";
+#[derive(Debug)]
+pub(crate) struct GitCodeConfig {
+	pub(crate) token: Option<String>,
+	pub(crate) base_url: String,
+	pub(crate) api_url: String,
+	pub(crate) web_api_url: String,
+}
+
+impl Default for GitCodeConfig {
+	fn default() -> Self {
+		GitCodeConfig {
+			token: None,
+			base_url: "https://gitcode.com".to_string(),
+			api_url: "https://api.gitcode.com/api/v5".to_string(),
+			web_api_url: "https://web-api.gitcode.com".to_string(),
+		}
+	}
+}
+
+impl GitCodeConfig {
+	/// 设置访问令牌
+	pub fn set_token(&mut self, token: &str) {
+		self.token = Some(token.to_string());
+	}
+}
 
 #[derive(Debug, Default)]
 pub struct GitCodeClient {
-	pub token: Option<String>,
+	pub(crate) config: GitCodeConfig,
 }
 
 impl GitCodeClient {
@@ -49,7 +72,7 @@ impl Client for GitCodeClient {
 		if token.is_empty() {
 			return Err(Error::TokenEmpty);
 		}
-		self.token = Some(token.to_string());
+		self.config.set_token(token);
 		Ok(())
 	}
 
@@ -59,60 +82,66 @@ impl Client for GitCodeClient {
 	}
 
 	async fn get_user_info(&self) -> Result<UserInfo> {
-		if self.token.is_none() {
+		let (token, api_url) = (&self.config.token, &self.config.api_url);
+		if token.is_none() {
 			return Err(Error::TokenEmpty);
 		}
-		let url = format!("{}/user", API_URL);
+		let url = format!("{}/user", api_url);
 		let mut request = HTTP_CLIENT.get(url);
-		if let Some(token) = &self.token {
+		if let Some(token) = token {
 			request = request.bearer_auth(token);
 		}
 		let resp = request.send().await?;
 		let mut user_info: JsonValue = resp.json().await?;
 		if let Some(user) = user_info.0.as_object_mut() {
 			let user_name = user.get("username").and_then(|v| v.as_str()).unwrap();
-			let repo_count = get_user_repo_count(user_name).await?;
+			let repo_count = get_user_repo_count(&self.config, user_name).await?;
 			user.insert("repo_count".to_string(), Value::Number(repo_count.into()));
 		}
 		Ok(user_info.into())
 	}
 
 	async fn get_user_info_with_name(&self, user_name: &str) -> Result<UserInfo> {
-		let url = format!("{}/users/{}", API_URL, user_name);
+		let (token, api_url) = (&self.config.token, &self.config.api_url);
+		let url = format!("{}/users/{}", api_url, user_name);
 		let mut request = HTTP_CLIENT.get(url);
-		if let Some(token) = &self.token {
+		if let Some(token) = token {
 			request = request.bearer_auth(token);
 		}
 		let resp = request.send().await?;
 		let mut user_info: JsonValue = resp.json().await?;
 		if let Some(user) = user_info.0.as_object_mut() {
-			let repo_count = get_user_repo_count(user_name).await?;
+			let repo_count = get_user_repo_count(&self.config, user_name).await?;
 			user.insert("repo_count".to_string(), Value::Number(repo_count.into()));
 		}
 		Ok(user_info.into())
 	}
 
 	async fn get_user_avatar_url(&self, user_name: &str) -> Result<String> {
-		let url = format!("{}/uc/api/v1/user/setting/profile?username={}", WEB_API_URL, user_name);
+		let (web_api_url, base_url) = (&self.config.web_api_url, &self.config.base_url);
+		let url = format!("{}/uc/api/v1/user/setting/profile?username={}", web_api_url, user_name);
 		let res =
-			HTTP_CLIENT.get(url).header("Referer", BASE_URL).send().await?.json::<Value>().await?;
+			HTTP_CLIENT.get(url).header("Referer", base_url).send().await?.json::<Value>().await?;
 		let avatar_url = res.get("avatar").and_then(|v| v.as_str()).unwrap().to_string();
 		Ok(avatar_url)
 	}
 
 	async fn get_user_contribution(&self, user_name: &str) -> Result<ContributionResult> {
-		let mut url =
-			Url::parse(&format!("{}/uc/api/v1/events/{}/contributions", WEB_API_URL, user_name))?;
-		url.query_pairs_mut().append_pair("username", user_name);
+		let (web_api_url, base_url) = (&self.config.web_api_url, &self.config.base_url);
+		let url = format!(
+			"{}/uc/api/v1/events/{}/contributions?username={}",
+			web_api_url, user_name, user_name
+		);
 		let request = HTTP_CLIENT.get(url);
-		let res = request.header("Referer", BASE_URL).send().await?.json::<JsonValue>().await?;
+		let res = request.header("Referer", base_url).send().await?.json::<JsonValue>().await?;
 		Ok(res.into())
 	}
 
 	async fn get_org_info(&self, org_name: &str) -> Result<OrgInfo> {
-		let url = format!("{}/orgs/{}", WEB_API_URL, org_name);
+		let (token, web_api_url) = (&self.config.token, &self.config.web_api_url);
+		let url = format!("{}/orgs/{}", web_api_url, org_name);
 		let mut request = HTTP_CLIENT.get(url);
-		if let Some(token) = &self.token {
+		if let Some(token) = token {
 			request = request.bearer_auth(token);
 		}
 		let res = request.send().await?.json::<JsonValue>().await?;
@@ -124,14 +153,15 @@ impl Client for GitCodeClient {
 		org_name: &str,
 		option: Option<OrgRepoListOptions>,
 	) -> Result<Vec<RepoInfo>> {
-		let url = format!("{}/orgs/{}/repos", API_URL, org_name);
+		let (token, api_url) = (&self.config.token, &self.config.api_url);
+		let url = format!("{}/orgs/{}/repos", api_url, org_name);
 		let mut request = HTTP_CLIENT.get(url);
 		let mut params: HashMap<&str, String> = HashMap::new();
-		if let Some(token) = &self.token {
+		if let Some(token) = token {
 			request = request.bearer_auth(token);
 		}
 		if let Some(option) = option {
-			let per_page = option.per_page.unwrap_or_default().min(100);
+			let per_page = option.per_page.unwrap_or_default().max(100);
 			params.insert("per_page", per_page.to_string());
 			let page = option.page.unwrap_or_default();
 			params.insert("page", page.to_string());
@@ -141,17 +171,19 @@ impl Client for GitCodeClient {
 	}
 
 	async fn get_org_avatar_url(&self, org_name: &str) -> Result<String> {
-		let url = format!("{}/api/v2/groups/{}", WEB_API_URL, org_name);
+		let (base_url, web_api_url) = (&self.config.base_url, &self.config.web_api_url);
+		let url = format!("{}/api/v2/groups/{}", web_api_url, org_name);
 		let res =
-			HTTP_CLIENT.get(url).header("Referer", BASE_URL).send().await?.json::<Value>().await?;
+			HTTP_CLIENT.get(url).header("Referer", base_url).send().await?.json::<Value>().await?;
 		let avatar_url = res.get("avatar").and_then(|v| v.as_str()).unwrap().to_string();
 		Ok(avatar_url)
 	}
 
 	async fn get_repo_info(&self, repo_path: (&str, &str)) -> Result<RepoInfo> {
-		let url = format!("{}/repos/{}/{}", API_URL, repo_path.0, repo_path.1);
+		let (token, api_url) = (&self.config.token, &self.config.api_url);
+		let url = format!("{}/repos/{}/{}", api_url, repo_path.0, repo_path.1);
 		let mut request = HTTP_CLIENT.get(url);
-		if let Some(token) = &self.token {
+		if let Some(token) = token {
 			request = request.bearer_auth(token);
 		}
 		let res = request.send().await?.json::<JsonValue>().await?;
@@ -159,18 +191,19 @@ impl Client for GitCodeClient {
 	}
 
 	async fn get_user_repos(&self, option: Option<ReposListOptions>) -> Result<Vec<RepoInfo>> {
-		let url = format!("{}/user/repos", API_URL);
+		let (token, api_url) = (&self.config.token, &self.config.api_url);
+		let url = format!("{}/user/repos", api_url);
 		let mut request = HTTP_CLIENT.get(url);
 		let mut params: HashMap<&str, String> = HashMap::new();
 
-		if let Some(token) = &self.token {
+		if let Some(token) = token {
 			request = request.bearer_auth(token);
 		}
 
 		params.insert("sort", "pushed".to_string());
 
 		if let Some(option) = option {
-			let per_page = option.per_page.unwrap_or_default().min(100);
+			let per_page = option.per_page.unwrap_or_default().max(100);
 			params.insert("per_page", per_page.to_string());
 			let page = option.page.unwrap_or_default();
 			params.insert("page", page.to_string());
@@ -184,18 +217,19 @@ impl Client for GitCodeClient {
 		user_name: &str,
 		option: Option<ReposListOptions>,
 	) -> Result<Vec<RepoInfo>> {
-		let url = format!("{}/users/{}/repos", API_URL, user_name);
+		let (token, api_url) = (&self.config.token, &self.config.api_url);
+		let url = format!("{}/users/{}/repos", api_url, user_name);
 		let mut request = HTTP_CLIENT.get(url);
 		let mut params: HashMap<&str, String> = HashMap::new();
 
-		if let Some(token) = &self.token {
+		if let Some(token) = token {
 			request = request.bearer_auth(token);
 		}
 
 		params.insert("sort", "pushed".to_string());
 
 		if let Some(option) = option {
-			let per_page = option.per_page.unwrap_or_default().min(100);
+			let per_page = option.per_page.unwrap_or_default().max(100);
 			params.insert("per_page", per_page.to_string());
 			let page = option.page.unwrap_or_default();
 			params.insert("page", page.to_string());
@@ -209,15 +243,16 @@ impl Client for GitCodeClient {
 		repo_path: (&str, &str),
 		sha: Option<&str>,
 	) -> Result<CommitInfo> {
+		let (token, api_url) = (&self.config.token, &self.config.api_url);
 		let url = format!(
 			"{}/repos/{}/{}/commits/{}",
-			API_URL,
+			api_url,
 			repo_path.0,
 			repo_path.1,
 			sha.unwrap_or("HEAD")
 		);
 		let mut request = HTTP_CLIENT.get(url);
-		if let Some(token) = &self.token {
+		if let Some(token) = token {
 			request = request.bearer_auth(token);
 		}
 		let resp = request.send().await?;
@@ -273,15 +308,16 @@ impl Client for GitCodeClient {
 		repo_path: (&str, &str),
 		option: Option<CommitListOptions>,
 	) -> Result<Vec<CommitInfo>> {
-		let url = format!("{}/repos/{}/{}/commits", API_URL, repo_path.0, repo_path.1);
+		let (token, api_url) = (&self.config.token, &self.config.api_url);
+		let url = format!("{}/repos/{}/{}/commits", api_url, repo_path.0, repo_path.1);
 		let mut request = HTTP_CLIENT.get(url);
 		let mut params: HashMap<&str, String> = HashMap::new();
-		if let Some(token) = &self.token {
+		if let Some(token) = token {
 			request = request.bearer_auth(token);
 		}
 
 		if let Some(option) = option {
-			let per_page = option.per_page.unwrap_or_default().min(100);
+			let per_page = option.per_page.unwrap_or_default().max(100);
 			params.insert("per_page", per_page.to_string());
 			let page = option.page.unwrap_or_default();
 			params.insert("page", page.to_string());
@@ -308,17 +344,15 @@ impl Client for GitCodeClient {
 		user_name: &str,
 		permission: Option<CollaboratorPermission>,
 	) -> Result<CollaboratorResult> {
-		if self.token.is_none() {
+		let (token, api_url) = (&self.config.token, &self.config.api_url);
+		if token.is_none() {
 			return Err(Error::TokenEmpty);
 		}
 		let url = format!(
 			"{}/repos/{}/{}/collaborators/{}",
-			API_URL, repo_path.0, repo_path.1, user_name
+			api_url, repo_path.0, repo_path.1, user_name
 		);
-		let mut request = HTTP_CLIENT.put(url);
-		if let Some(token) = &self.token {
-			request = request.bearer_auth(token);
-		}
+		let request = HTTP_CLIENT.put(url).bearer_auth(token.as_ref().unwrap());
 		let permission = match permission {
 			Some(permission) => match permission {
 				CollaboratorPermission::Admin => "admin".to_string(),
@@ -331,11 +365,7 @@ impl Client for GitCodeClient {
 			"permission": permission,
 		});
 
-		let resp = request
-			.header(header::CONTENT_TYPE, "application/json")
-			.body(body.to_string())
-			.send()
-			.await?;
+		let resp = request.body(body.to_string()).send().await?;
 		let mut collaborator = resp.json::<JsonValue>().await?;
 		if let Some(obj) = collaborator.0.as_object_mut() {
 			let avatar_url = self.get_user_avatar_url(user_name).await?;
@@ -351,11 +381,12 @@ impl Client for GitCodeClient {
 		body: Option<&str>,
 		option: Option<CreateIssueOptions>,
 	) -> Result<IssueInfo> {
-		if self.token.is_none() {
+		let (token, api_url) = (&self.config.token, &self.config.api_url);
+		if token.is_none() {
 			return Err(Error::TokenEmpty);
 		}
-		let url = format!("{}/repos/{}/{}/issues", API_URL, repo_path.0, repo_path.1);
-		let request = HTTP_CLIENT.post(url).bearer_auth(self.token.as_ref().unwrap());
+		let url = format!("{}/repos/{}/{}/issues", api_url, repo_path.0, repo_path.1);
+		let request = HTTP_CLIENT.post(url).bearer_auth(token.as_ref().unwrap());
 		let mut req_body: HashMap<&str, String> = HashMap::new();
 		req_body.insert("title", title.to_string());
 		if let Some(body) = body {
@@ -373,13 +404,69 @@ impl Client for GitCodeClient {
 		let res = request.json(&req_body).send().await?.json::<JsonValue>().await?;
 		Ok(res.into())
 	}
+
+	async fn get_issue_info(
+		&self,
+		repo_path: (&str, &str),
+		issue_number: String,
+	) -> Result<IssueInfo> {
+		let (token, api_url) = (&self.config.token, &self.config.api_url);
+		let url =
+			format!("{}/repos/{}/{}/issues/{}", api_url, repo_path.0, repo_path.1, issue_number);
+		let mut request = HTTP_CLIENT.get(url);
+		if let Some(token) = token {
+			request = request.bearer_auth(token);
+		};
+		let res = request.send().await?.json::<JsonValue>().await?;
+		Ok(res.into())
+	}
+
+	async fn get_issue_list(
+		&self,
+		repo_path: (&str, &str),
+		options: Option<IssueListOptions>,
+	) -> Result<Vec<IssueInfo>> {
+		let (token, api_url) = (&self.config.token, &self.config.api_url);
+		let url = format!("{}/repos/{}/{}/issues", api_url, repo_path.0, repo_path.1);
+		let mut request = HTTP_CLIENT.get(url);
+		if let Some(token) = token {
+			request = request.bearer_auth(token);
+		};
+		let mut params: HashMap<&str, String> = HashMap::new();
+		if let Some(option) = options {
+			let per_page = option.per_page.unwrap_or_default().max(100);
+			params.insert("per_page", per_page.to_string());
+			let page = option.page.unwrap_or_default();
+			params.insert("page", page.to_string());
+			if !option.labels.is_empty() {
+				params.insert("labels", option.labels.join(","));
+			}
+			if let Some(state) = option.state {
+				let state_type = match state {
+					StateType::Opened => "open",
+					StateType::Closed => "closed",
+				};
+				params.insert("state", state_type.to_string());
+			}
+			if let Some(assignee) = option.assignee {
+				params.insert("assignee", assignee);
+			}
+			if let Some(creator) = option.creator {
+				params.insert("creator", creator);
+			}
+		};
+		let res = request.query(&params).send().await?.json::<Vec<JsonValue>>().await?;
+		Ok(res.into_iter().map(|v| v.into()).collect())
+	}
 }
 
-async fn get_user_repo_count(user_name: &str) -> Result<u64> {
-	let mut url =
-		Url::parse(format!("{}/api/v2/projects/profile/{}", WEB_API_URL, user_name).as_str())?;
-	url.query_pairs_mut().append_pair("repo_query_type", "created");
-	let request = HTTP_CLIENT.get(url).header("Referer", BASE_URL);
+async fn get_user_repo_count(config: &GitCodeConfig, user_name: &str) -> Result<u64> {
+	let (base_url, web_api_url) = (&config.base_url, &config.web_api_url);
+	let url = format!(
+		"{}/uc/api/v1/events/{}/contributions?username={}",
+		web_api_url, user_name, user_name
+	);
+	let request = HTTP_CLIENT.get(url).header("Referer", base_url);
 	let resp = request.send().await?;
 	let repo_info: JsonValue = resp.json().await?;
 	let repo_count = repo_info.0.get("total").and_then(|total| total.as_u64()).unwrap_or(0);

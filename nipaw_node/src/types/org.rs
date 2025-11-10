@@ -4,8 +4,6 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[napi(object)]
 pub struct OrgInfo {
-	/// 组织id
-	pub id: u32,
 	/// 登录名
 	pub login: String,
 	/// 组织名
@@ -23,7 +21,6 @@ pub struct OrgInfo {
 impl From<nipaw_core::types::org::OrgInfo> for OrgInfo {
 	fn from(org_info: nipaw_core::types::org::OrgInfo) -> Self {
 		Self {
-			id: org_info.id as u32,
 			login: org_info.login,
 			name: org_info.name,
 			email: org_info.email,

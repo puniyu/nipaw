@@ -5,8 +5,6 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[napi(object)]
 pub struct UserInfo {
-	/// 用户Id
-	pub id: String,
 	/// 登录用户名
 	pub login: String,
 	/// 用户昵称
@@ -25,8 +23,7 @@ pub struct UserInfo {
 
 impl From<nipaw_core::types::user::UserInfo> for UserInfo {
 	fn from(user_info: nipaw_core::types::user::UserInfo) -> Self {
-		UserInfo {
-			id: user_info.id,
+		Self {
 			login: user_info.login,
 			name: user_info.name,
 			avatar_url: user_info.avatar_url,

@@ -4,8 +4,6 @@ use strum::{Display, EnumString, IntoStaticStr};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct RepoInfo {
-	/// 仓库id
-	pub id: String,
 	/// 仓库所有者
 	pub owner: String,
 	/// 仓库名称
