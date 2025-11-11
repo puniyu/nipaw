@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.7.0](https://github.com/puniyu/nipaw/compare/node-v1.6.1...node-v1.7.0) (2025-11-11)
+
+
+### ✨ 新功能
+
+* **core:** 添加更新issue功能并优化依赖管理 ([6c35dca](https://github.com/puniyu/nipaw/commit/6c35dca6dfbe4b324627cf742556fc3c8296f918))
+* **core:** 添加获取议题信息功能 ([#47](https://github.com/puniyu/nipaw/issues/47)) ([186d61c](https://github.com/puniyu/nipaw/commit/186d61cc97d0ec4b262c842e1c06ddb2330afa5f))
+* **github:** 支持设置 GitHub 反向代理配置 ([da70774](https://github.com/puniyu/nipaw/commit/da7077453d23d1d038f5f5f5e6c644de5fe1be3c))
+
+
+### 🔧 其他更新
+
+* **deps:** update nipaw packages ([40eba5e](https://github.com/puniyu/nipaw/commit/40eba5e262d02d95747e1397e35303c5cee02d46))
+* **deps:** update pnpm to v10.21.0 ([563d181](https://github.com/puniyu/nipaw/commit/563d181e54be65dc5cffd5b232bed6481075b1d7))
+
 ## [1.6.1](https://github.com/puniyu/nipaw/compare/node-v1.6.0...node-v1.6.1) (2025-11-07)
 
 

@@ -1,5 +1,20 @@
 # 变更日志
 
+## [0.11.0](https://github.com/puniyu/nipaw/compare/gitcode-v0.10.1...gitcode-v0.11.0) (2025-11-11)
+
+
+### ✨ 新功能
+
+* **core:** 添加更新issue功能并优化依赖管理 ([6c35dca](https://github.com/puniyu/nipaw/commit/6c35dca6dfbe4b324627cf742556fc3c8296f918))
+* **core:** 添加获取议题信息功能 ([#47](https://github.com/puniyu/nipaw/issues/47)) ([186d61c](https://github.com/puniyu/nipaw/commit/186d61cc97d0ec4b262c842e1c06ddb2330afa5f))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * nipaw_core bumped from 0.10.1 to 0.11.0
+
 ## [0.10.1](https://github.com/puniyu/nipaw/compare/gitcode-v0.10.0...gitcode-v0.10.1) (2025-11-07)
 
 
