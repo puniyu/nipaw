@@ -1,5 +1,19 @@
 # 变更日志
 
+## [0.11.1](https://github.com/puniyu/nipaw/compare/gitcode-v0.11.0...gitcode-v0.11.1) (2025-11-11)
+
+
+### 🐛 错误修复
+
+* **option:** 将标签和分配用户字段改为可选 ([7ca37b1](https://github.com/puniyu/nipaw/commit/7ca37b1db732707e876d633717602049ac781f3e))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * nipaw_core bumped from 0.11.0 to 0.11.1
+
 ## [0.11.0](https://github.com/puniyu/nipaw/compare/gitcode-v0.10.1...gitcode-v0.11.0) (2025-11-11)
 
 

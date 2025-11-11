@@ -1,6 +1,6 @@
 {
   "name": "@puniyu/nipaw",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "一个git平台封装库",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
