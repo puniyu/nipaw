@@ -173,9 +173,9 @@ impl Client for GiteeClient {
 			request = request.query(&[("access_token", token.as_str())]);
 		}
 		if let Some(option) = options {
-			let per_page = option.per_page.unwrap_or_default().min(100);
+			let per_page = option.per_page.unwrap_or(30).max(100);
 			params.insert("per_page", per_page.to_string());
-			let page = option.page.unwrap_or_default();
+			let page = option.page.unwrap_or(1);
 			params.insert("page", page.to_string());
 		}
 		let resp = request.send().await?;
@@ -226,9 +226,9 @@ impl Client for GiteeClient {
 		params.insert("sort", "updated".to_string());
 
 		if let Some(option) = option {
-			let per_page = option.per_page.unwrap_or_default().min(100);
+			let per_page = option.per_page.unwrap_or(30).max(100);
 			params.insert("per_page", per_page.to_string());
-			let page = option.page.unwrap_or_default();
+			let page = option.page.unwrap_or(1);
 			params.insert("page", page.to_string());
 		}
 		let resp = request.query(&params).send().await?;
@@ -252,9 +252,9 @@ impl Client for GiteeClient {
 		params.insert("sort", "pushed".to_string());
 
 		if let Some(option) = option {
-			let per_page = option.per_page.unwrap_or_default().min(100);
+			let per_page = option.per_page.unwrap_or(30).max(100);
 			params.insert("per_page", per_page.to_string());
-			let page = option.page.unwrap_or_default();
+			let page = option.page.unwrap_or(1);
 			params.insert("page", page.to_string());
 		}
 		let resp = request.query(&params).send().await?;
@@ -333,9 +333,9 @@ impl Client for GiteeClient {
 		}
 
 		if let Some(option) = option {
-			let per_page = option.per_page.unwrap_or_default().min(100);
+			let per_page = option.per_page.unwrap_or(30).max(100);
 			params.insert("per_page", per_page.to_string());
-			let page = option.page.unwrap_or_default();
+			let page = option.page.unwrap_or(1);
 			params.insert("page", page.to_string());
 			if let Some(sha) = option.sha {
 				params.insert("sha", sha.to_string());
@@ -458,9 +458,9 @@ impl Client for GiteeClient {
 		};
 		let mut params: HashMap<&str, String> = HashMap::new();
 		if let Some(option) = options {
-			let per_page = option.per_page.unwrap_or_default().max(100);
+			let per_page = option.per_page.unwrap_or(30).max(100);
 			params.insert("per_page", per_page.to_string());
-			let page = option.page.unwrap_or_default();
+			let page = option.page.unwrap_or(1);
 			params.insert("page", page.to_string());
 			if let Some(labels) = option.labels {
 				params.insert("labels", labels.join(","));

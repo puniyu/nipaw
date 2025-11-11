@@ -192,7 +192,7 @@ impl Client for CnbClient {
 		}
 		let mut params: HashMap<&str, String> = HashMap::new();
 		if let Some(option) = option {
-			let per_page = option.per_page.unwrap_or_default().max(100);
+			let per_page = option.per_page.unwrap_or(30).max(100);
 			params.insert("per_page", per_page.to_string());
 			let page = option.page.unwrap_or_default();
 			params.insert("page", page.to_string());
@@ -242,7 +242,7 @@ impl Client for CnbClient {
 		params.insert("sort", "pushed".to_owned());
 
 		if let Some(option) = option {
-			let per_page = option.per_page.unwrap_or_default().max(100);
+			let per_page = option.per_page.unwrap_or(30).max(100);
 			params.insert("per_page", per_page.to_string());
 			let page = option.page.unwrap_or_default();
 			params.insert("page", page.to_string());
@@ -268,7 +268,7 @@ impl Client for CnbClient {
 		params.insert("role", "owner".to_owned());
 
 		if let Some(option) = option {
-			let per_page = option.per_page.unwrap_or_default().max(100);
+			let per_page = option.per_page.unwrap_or(30).max(100);
 			params.insert("per_page", per_page.to_string());
 			let page = option.page.unwrap_or_default();
 			params.insert("page", page.to_string());
@@ -357,7 +357,7 @@ impl Client for CnbClient {
 		}
 		let mut params: HashMap<&str, String> = HashMap::new();
 		if let Some(option) = option {
-			let per_page = option.per_page.unwrap_or_default().max(100);
+			let per_page = option.per_page.unwrap_or(30).max(100);
 			params.insert("per_page", per_page.to_string());
 			let page = option.page.unwrap_or_default();
 			params.insert("page", page.to_string());
@@ -502,7 +502,7 @@ impl Client for CnbClient {
 		let request = client.get(url).bearer_auth(token.as_ref().unwrap());
 		let mut params: HashMap<&str, String> = HashMap::new();
 		if let Some(option) = options {
-			let per_page = option.per_page.unwrap_or_default().max(100);
+			let per_page = option.per_page.unwrap_or(30).max(100);
 			params.insert("per_page", per_page.to_string());
 			let page = option.page.unwrap_or_default();
 			params.insert("page", page.to_string());

@@ -183,7 +183,7 @@ impl Client for GitCodeClient {
 			request = request.bearer_auth(token);
 		}
 		if let Some(option) = option {
-			let per_page = option.per_page.unwrap_or_default().max(100);
+			let per_page = option.per_page.unwrap_or(30).max(100);
 			params.insert("per_page", per_page.to_string());
 			let page = option.page.unwrap_or_default();
 			params.insert("page", page.to_string());
@@ -227,7 +227,7 @@ impl Client for GitCodeClient {
 		params.insert("sort", "pushed".to_string());
 
 		if let Some(option) = option {
-			let per_page = option.per_page.unwrap_or_default().max(100);
+			let per_page = option.per_page.unwrap_or(30).max(100);
 			params.insert("per_page", per_page.to_string());
 			let page = option.page.unwrap_or_default();
 			params.insert("page", page.to_string());
@@ -254,7 +254,7 @@ impl Client for GitCodeClient {
 		params.insert("sort", "pushed".to_string());
 
 		if let Some(option) = option {
-			let per_page = option.per_page.unwrap_or_default().max(100);
+			let per_page = option.per_page.unwrap_or(30).max(100);
 			params.insert("per_page", per_page.to_string());
 			let page = option.page.unwrap_or_default();
 			params.insert("page", page.to_string());
@@ -344,7 +344,7 @@ impl Client for GitCodeClient {
 		}
 
 		if let Some(option) = option {
-			let per_page = option.per_page.unwrap_or_default().max(100);
+			let per_page = option.per_page.unwrap_or(30).max(100);
 			params.insert("per_page", per_page.to_string());
 			let page = option.page.unwrap_or_default();
 			params.insert("page", page.to_string());
@@ -465,7 +465,7 @@ impl Client for GitCodeClient {
 		};
 		let mut params: HashMap<&str, String> = HashMap::new();
 		if let Some(option) = options {
-			let per_page = option.per_page.unwrap_or_default().max(100);
+			let per_page = option.per_page.unwrap_or(30).max(100);
 			params.insert("per_page", per_page.to_string());
 			let page = option.page.unwrap_or_default();
 			params.insert("page", page.to_string());
