@@ -24,7 +24,6 @@ impl Middleware for ResponseMiddleware {
 		next: Next<'_>,
 	) -> Result<Response> {
 		let res = next.run(req, extensions).await?;
-		println!("res: {:#?}", res);
 		match res.status() {
 			StatusCode::OK => Ok(res),
 			StatusCode::UNAUTHORIZED => Err(Error::Middleware(CoreError::Unauthorized.into())),
