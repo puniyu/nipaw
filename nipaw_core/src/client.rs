@@ -1,3 +1,4 @@
+use crate::option::UpdateIssueOptions;
 use crate::{
 	Result,
 	option::{
@@ -181,7 +182,7 @@ pub trait Client: Send + Sync {
 	async fn get_issue_info(
 		&self,
 		repo_path: (&str, &str),
-		issue_number: String,
+		issue_number: &str,
 	) -> Result<IssueInfo>;
 
 	/// 获取仓库所有issue信息
@@ -193,4 +194,18 @@ pub trait Client: Send + Sync {
 		repo_path: (&str, &str),
 		options: Option<IssueListOptions>,
 	) -> Result<Vec<IssueInfo>>;
+
+	/// 更新issue信息
+	///
+	/// ## 参数
+	/// - `repo_path` - 仓库路径，格式为 `(owner, repo)`
+	/// - `issue_number` - issue编号
+	/// - `options` - 更新issue选项, 详见 [UpdateIssueOptions]
+	///
+	async fn update_issue(
+		&self,
+		repo_path: (&str, &str),
+		issue_number: &str,
+		options: Option<UpdateIssueOptions>,
+	) -> Result<IssueInfo>;
 }

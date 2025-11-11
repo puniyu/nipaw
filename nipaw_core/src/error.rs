@@ -10,6 +10,8 @@ pub enum Error {
 	MiddlewareError(#[from] reqwest_middleware::Error),
 	#[error("url parse error: {0}")]
 	URLParseError(#[from] url::ParseError),
+	#[error("json serialize/deserialize error: {0}")]
+	JsonError(#[from] serde_json::Error),
 	#[error("not found")]
 	NotFound,
 	#[error("forbidden: {0}")]

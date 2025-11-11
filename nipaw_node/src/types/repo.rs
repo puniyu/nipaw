@@ -1,7 +1,6 @@
 use chrono::{DateTime, Utc};
 use napi_derive::napi;
 use serde::{Deserialize, Serialize};
-use strum::{Display, EnumString, IntoStaticStr};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[napi(object)]
@@ -54,13 +53,11 @@ impl From<nipaw_core::types::repo::RepoInfo> for RepoInfo {
 	}
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString, IntoStaticStr)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[napi(string_enum)]
 pub enum RepoVisibility {
 	/// 公开
-	#[serde(rename = "public")]
 	Public,
-	#[serde(rename = "private")]
 	/// 私有
 	Private,
 }

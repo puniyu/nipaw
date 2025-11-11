@@ -12,14 +12,14 @@ use async_trait::async_trait;
 use chrono::{Datelike, Local};
 use futures::future::join_all;
 use nipaw_core::{
-	CollaboratorPermission, Result,
+	Result,
 	error::Error,
 	option::{
 		CommitListOptions, CreateIssueOptions, IssueListOptions, OrgRepoListOptions,
-		ReposListOptions,
+		ReposListOptions, UpdateIssueOptions,
 	},
 	types::{
-		collaborator::CollaboratorResult,
+		collaborator::{CollaboratorPermission, CollaboratorResult},
 		commit::CommitInfo,
 		issue::{IssueInfo, StateType},
 		org::OrgInfo,
@@ -225,9 +225,8 @@ impl Client for CnbClient {
 			let page = option.page.unwrap_or_default();
 			params.insert("page", page.to_string());
 		}
-		let resp = request.query(&params).send().await?;
-		let repo_infos: Vec<JsonValue> = resp.json().await?;
-		Ok(repo_infos.into_iter().map(|v| v.into()).collect())
+		let res = request.query(&params).send().await?.json::<Vec<JsonValue>>().await?;
+		Ok(res.into_iter().map(|v| v.into()).collect())
 	}
 
 	async fn get_user_repos_with_name(
@@ -432,16 +431,14 @@ impl Client for CnbClient {
 			.map(|s| s.to_string())
 			.unwrap_or_default();
 		let user_info = get_user_info(&self.config, &user_name).await?;
-		if let Some(obj) = res.0.as_object_mut() {
-			obj.insert("user".to_string(), serde_json::to_value(user_info).unwrap());
-		}
+		res.0.as_object_mut().unwrap().insert("user".to_string(), serde_json::to_value(user_info)?);
 		Ok(res.into())
 	}
 
 	async fn get_issue_info(
 		&self,
 		repo_path: (&str, &str),
-		issue_number: String,
+		issue_number: &str,
 	) -> Result<IssueInfo> {
 		let (token, api_url) = (&self.config.token, &self.config.api_url);
 		if token.is_none() {
@@ -458,9 +455,7 @@ impl Client for CnbClient {
 			.map(|s| s.to_string())
 			.unwrap_or_default();
 		let user_info = get_user_info(&self.config, &user_name).await?;
-		if let Some(obj) = res.0.as_object_mut() {
-			obj.insert("user".to_string(), serde_json::to_value(user_info).unwrap());
-		}
+		res.0.as_object_mut().unwrap().insert("user".to_string(), serde_json::to_value(user_info)?);
 		Ok(res.into())
 	}
 
@@ -509,11 +504,13 @@ impl Client for CnbClient {
 				.and_then(|username| username.as_str())
 				.unwrap_or_default()
 				.to_string();
-
 			let user_info = get_user_info(&self.config, &user_name).await.unwrap();
-			if let Some(obj) = issue_json.0.as_object_mut() {
-				obj.insert("user".to_string(), serde_json::to_value(user_info).unwrap());
-			}
+			issue_json
+				.0
+				.as_object_mut()
+				.unwrap()
+				.insert("user".to_string(), serde_json::to_value(user_info).unwrap());
+
 			issue_json
 		}))
 		.await
@@ -521,6 +518,47 @@ impl Client for CnbClient {
 		.map(|v| v.into())
 		.collect::<Vec<IssueInfo>>();
 		Ok(issues)
+	}
+
+	async fn update_issue(
+		&self,
+		repo_path: (&str, &str),
+		issue_number: &str,
+		options: Option<UpdateIssueOptions>,
+	) -> Result<IssueInfo> {
+		let (token, api_url) = (&self.config.token, &self.config.api_url);
+		if token.is_none() {
+			return Err(Error::TokenEmpty);
+		}
+		let url = format!("{}/{}/{}/-/issues/{}", api_url, repo_path.0, repo_path.1, issue_number);
+		let request = HTTP_CLIENT.put(url).bearer_auth(token.as_ref().unwrap());
+		let mut req_body: HashMap<&str, String> = HashMap::new();
+		if let Some(option) = options {
+			if let Some(title) = option.title {
+				req_body.insert("title", title);
+			}
+			if let Some(body) = option.body {
+				req_body.insert("body", body);
+			}
+			if let Some(state) = option.state {
+				let state_type = match state {
+					StateType::Opened => "open",
+					StateType::Closed => "closed",
+				};
+				req_body.insert("state", state_type.to_string());
+			}
+		};
+		let mut res = request.json(&req_body).send().await?.json::<JsonValue>().await?;
+		let user_name = res
+			.0
+			.get("author")
+			.and_then(|author| author.get("username"))
+			.and_then(|username| username.as_str())
+			.map(|s| s.to_string())
+			.unwrap_or_default();
+		let user_info = get_user_info(&self.config, &user_name).await?;
+		res.0.as_object_mut().unwrap().insert("user".to_string(), serde_json::to_value(user_info)?);
+		Ok(res.into())
 	}
 }
 

@@ -1,7 +1,6 @@
 use chrono::{DateTime, Utc};
 use napi_derive::napi;
 use serde::{Deserialize, Serialize};
-use strum::{Display, EnumString, IntoStaticStr};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[napi(object)]
@@ -26,12 +25,12 @@ pub struct IssueInfo {
 	pub closed_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString, IntoStaticStr)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[napi(string_enum)]
 pub enum StateType {
-	#[strum(serialize = "opened")]
+	/// 已开启
 	Opened,
-	#[strum(serialize = "closed")]
+	/// 已关闭
 	Closed,
 }
 
@@ -40,6 +39,15 @@ impl From<nipaw_core::types::issue::StateType> for StateType {
 		match value {
 			nipaw_core::types::issue::StateType::Opened => StateType::Opened,
 			nipaw_core::types::issue::StateType::Closed => StateType::Closed,
+		}
+	}
+}
+
+impl From<StateType> for nipaw_core::types::issue::StateType {
+	fn from(value: StateType) -> Self {
+		match value {
+			StateType::Opened => nipaw_core::types::issue::StateType::Opened,
+			StateType::Closed => nipaw_core::types::issue::StateType::Closed,
 		}
 	}
 }

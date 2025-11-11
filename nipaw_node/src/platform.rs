@@ -1,7 +1,10 @@
 use crate::{
 	common::RT_RUNTIME,
 	error,
-	option::{CommitListOptions, CreateIssueOptions, OrgRepoListOptions, ReposListOptions},
+	option::{
+		CommitListOptions, CreateIssueOptions, IssueListOptions, OrgRepoListOptions,
+		ReposListOptions, UpdateIssueOptions,
+	},
 	types::{
 		collaborator::{CollaboratorPermission, CollaboratorResult},
 		commit::CommitInfo,
@@ -281,6 +284,47 @@ macro_rules! impl_client {
 					let issue_info = client
 						.create_issue(repo_path, title.as_str(), body.as_deref(), option.map(|o| o.into()))
 						.await?;
+					Ok(issue_info.into())
+				}
+
+				/// 获取issue信息
+				///
+				/// ## 参数
+				/// - `owner` - 仓库所有者
+				/// - `repo` - 仓库名称
+				/// - `issue_number` - issue编号
+				///
+				#[napi]
+				pub async fn get_issue_info(&self, owner: String, name: String, issue_number: String) -> Result<IssueInfo> {
+					let client = [<create_client_ $client_type:lower>]().await;
+					let repo_path = (owner.as_str(), name.as_str());
+					let issue_info = client.get_issue_info(repo_path, issue_number.as_str()).await?;
+					Ok(issue_info.into())
+				}
+
+				/// 获取仓库所有issue信息
+				///
+				/// ## 参数
+				/// - `owner` - 仓库所有者
+				/// - `repo` - 仓库名称
+				#[napi]
+				pub async fn get_issue_list(&self, owner: String, name: String, option: Option<IssueListOptions>) -> Result<Vec<IssueInfo>> {
+					let client = [<create_client_ $client_type:lower>]().await;
+					let issue_infos = client.get_issue_list((owner.as_str(), name.as_str()), option.map(|o| o.into())).await?;
+					Ok(issue_infos.into_iter().map(|v| v.into()).collect())
+				}
+				/// 更新issue信息
+				///
+				/// ## 参数
+				/// - `repo_path` - 仓库路径，格式为 `(owner, repo)`
+				/// - `issue_number` - issue编号
+				/// - `options` - 更新issue选项, 详见 [UpdateIssueOptions]
+				///
+				#[napi]
+				pub async fn update_issue(&self,owner: String, name: String, issue_number: String, options: Option<UpdateIssueOptions>) -> Result<IssueInfo> {
+					let client = [<create_client_ $client_type:lower>]().await;
+					let repo_path = (owner.as_str(), name.as_str());
+					let issue_info = client.update_issue(repo_path, issue_number.as_str(), options.map(|o| o.into())).await?;
 					Ok(issue_info.into())
 				}
 			}

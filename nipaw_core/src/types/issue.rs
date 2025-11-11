@@ -27,8 +27,10 @@ pub struct IssueInfo {
 #[derive(Debug, Clone, Serialize, Deserialize, Display, EnumString, IntoStaticStr)]
 pub enum StateType {
 	#[strum(serialize = "opened")]
+	/// 以打开
 	Opened,
 	#[strum(serialize = "closed")]
+	/// 已关闭
 	Closed,
 }
 

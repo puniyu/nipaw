@@ -79,6 +79,15 @@ pub struct CreateIssueOptions {
 	/// 分配的用户名
 	pub assignees: Vec<String>,
 }
+#[derive(Debug, Deserialize, Serialize, Default)]
+pub struct UpdateIssueOptions {
+	/// 标题
+	pub title: Option<String>,
+	/// 内容
+	pub body: Option<String>,
+	/// 状态
+	pub state: Option<StateType>,
+}
 
 #[derive(Debug, Deserialize, Serialize, Default)]
 pub struct IssueListOptions {

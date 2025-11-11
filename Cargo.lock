@@ -862,6 +862,7 @@ dependencies = [
  "reqwest",
  "reqwest-middleware",
  "serde",
+    "serde_json",
  "strum",
  "thiserror 2.0.17",
  "url",
@@ -929,7 +930,6 @@ dependencies = [
  "nipaw_github",
  "paste",
  "serde",
- "strum",
  "thiserror 2.0.17",
 ]
 

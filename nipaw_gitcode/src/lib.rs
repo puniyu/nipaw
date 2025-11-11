@@ -10,14 +10,14 @@ use crate::{
 };
 use async_trait::async_trait;
 use nipaw_core::{
-	CollaboratorPermission, Result,
+	Result,
 	error::Error,
 	option::{
 		CommitListOptions, CreateIssueOptions, IssueListOptions, OrgRepoListOptions,
-		ReposListOptions,
+		ReposListOptions, UpdateIssueOptions,
 	},
 	types::{
-		collaborator::CollaboratorResult,
+		collaborator::{CollaboratorPermission, CollaboratorResult},
 		commit::CommitInfo,
 		issue::{IssueInfo, StateType},
 		org::OrgInfo,
@@ -408,7 +408,7 @@ impl Client for GitCodeClient {
 	async fn get_issue_info(
 		&self,
 		repo_path: (&str, &str),
-		issue_number: String,
+		issue_number: &str,
 	) -> Result<IssueInfo> {
 		let (token, api_url) = (&self.config.token, &self.config.api_url);
 		let url =
@@ -457,6 +457,39 @@ impl Client for GitCodeClient {
 		};
 		let res = request.query(&params).send().await?.json::<Vec<JsonValue>>().await?;
 		Ok(res.into_iter().map(|v| v.into()).collect())
+	}
+
+	async fn update_issue(
+		&self,
+		repo_path: (&str, &str),
+		issue_number: &str,
+		options: Option<UpdateIssueOptions>,
+	) -> Result<IssueInfo> {
+		let (token, api_url) = (&self.config.token, &self.config.api_url);
+		if token.is_none() {
+			return Err(Error::TokenEmpty);
+		}
+		let url = format!("{}/repos/{}/issues/{}", api_url, repo_path.0, issue_number);
+		let request = HTTP_CLIENT.patch(url).bearer_auth(token.as_ref().unwrap());
+		let mut req_body: HashMap<&str, String> = HashMap::new();
+		req_body.insert("repo", repo_path.1.to_string());
+		if let Some(option) = options {
+			if let Some(title) = option.title {
+				req_body.insert("title", title);
+			}
+			if let Some(body) = option.body {
+				req_body.insert("body", body);
+			}
+			if let Some(state) = option.state {
+				let state_type = match state {
+					StateType::Opened => "open",
+					StateType::Closed => "closed",
+				};
+				req_body.insert("state", state_type.to_string());
+			}
+		};
+		let res = request.json(&req_body).send().await?.json::<JsonValue>().await?;
+		Ok(res.into())
 	}
 }
 
