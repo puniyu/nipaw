@@ -274,13 +274,13 @@ macro_rules! impl_client {
 				pub async fn create_issue(
 					&self,
 					owner: String,
-					name: String,
+					repo: String,
 					title: String,
 					body: Option<String>,
 					option: Option<CreateIssueOptions>,
 				) -> Result<IssueInfo> {
 					let client = [<create_client_ $client_type:lower>]().await;
-					let repo_path = (owner.as_str(), name.as_str());
+					let repo_path = (owner.as_str(), repo.as_str());
 					let issue_info = client
 						.create_issue(repo_path, title.as_str(), body.as_deref(), option.map(|o| o.into()))
 						.await?;
@@ -295,9 +295,9 @@ macro_rules! impl_client {
 				/// - `issue_number` - issue编号
 				///
 				#[napi]
-				pub async fn get_issue_info(&self, owner: String, name: String, issue_number: String) -> Result<IssueInfo> {
+				pub async fn get_issue_info(&self, owner: String, repo: String, issue_number: String) -> Result<IssueInfo> {
 					let client = [<create_client_ $client_type:lower>]().await;
-					let repo_path = (owner.as_str(), name.as_str());
+					let repo_path = (owner.as_str(), repo.as_str());
 					let issue_info = client.get_issue_info(repo_path, issue_number.as_str()).await?;
 					Ok(issue_info.into())
 				}
@@ -308,9 +308,10 @@ macro_rules! impl_client {
 				/// - `owner` - 仓库所有者
 				/// - `repo` - 仓库名称
 				#[napi]
-				pub async fn get_issue_list(&self, owner: String, name: String, option: Option<IssueListOptions>) -> Result<Vec<IssueInfo>> {
+				pub async fn get_issue_list(&self, owner: String, repo: String, option: Option<IssueListOptions>) -> Result<Vec<IssueInfo>> {
 					let client = [<create_client_ $client_type:lower>]().await;
-					let issue_infos = client.get_issue_list((owner.as_str(), name.as_str()), option.map(|o| o.into())).await?;
+					let repo_path = (owner.as_str(), repo.as_str());
+					let issue_infos = client.get_issue_list(repo_path, option.map(|o| o.into())).await?;
 					Ok(issue_infos.into_iter().map(|v| v.into()).collect())
 				}
 				/// 更新issue信息
@@ -322,9 +323,9 @@ macro_rules! impl_client {
 				/// - `options` - 更新issue选项, 详见 [UpdateIssueOptions]
 				///
 				#[napi]
-				pub async fn update_issue(&self,owner: String, name: String, issue_number: String, options: Option<UpdateIssueOptions>) -> Result<IssueInfo> {
+				pub async fn update_issue(&self,owner: String, repo: String, issue_number: String, options: Option<UpdateIssueOptions>) -> Result<IssueInfo> {
 					let client = [<create_client_ $client_type:lower>]().await;
-					let repo_path = (owner.as_str(), name.as_str());
+					let repo_path = (owner.as_str(), repo.as_str());
 					let issue_info = client.update_issue(repo_path, issue_number.as_str(), options.map(|o| o.into())).await?;
 					Ok(issue_info.into())
 				}
