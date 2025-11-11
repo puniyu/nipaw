@@ -1,5 +1,12 @@
 # 变更日志
 
+## [0.11.2](https://github.com/puniyu/nipaw/compare/github-v0.11.1...github-v0.11.2) (2025-11-11)
+
+
+### 🐛 错误修复
+
+* **middleware:** 移除调试打印语句 ([68a98d4](https://github.com/puniyu/nipaw/commit/68a98d4000e02f7547a2360a0b62d21551ef50cc))
+
 ## [0.11.1](https://github.com/puniyu/nipaw/compare/github-v0.11.0...github-v0.11.1) (2025-11-11)
 
 
