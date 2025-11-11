@@ -95,7 +95,7 @@ impl From<nipaw_core::types::issue::IssueInfo> for IssueInfo {
 			user: value.user.into(),
 			created_at: value.created_at,
 			updated_at: value.updated_at,
-			closed_at: None,
+			closed_at: value.closed_at,
 		}
 	}
 }
