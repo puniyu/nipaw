@@ -1,13 +1,10 @@
-mod client;
 mod common;
 mod middleware;
 
 pub use nipaw_core::Client;
 
-use crate::{
-	client::{HTTP_CLIENT, PROXY_URL},
-	common::JsonValue,
-};
+use crate::common::JsonValue;
+use crate::middleware::{HeaderMiddleware, ResponseMiddleware};
 use async_trait::async_trait;
 use nipaw_core::{
 	Result,
@@ -25,9 +22,13 @@ use nipaw_core::{
 		user::{ContributionResult, UserInfo},
 	},
 };
+use reqwest::Proxy;
+use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::fmt::Debug;
+use std::sync::Arc;
+use tokio::sync::RwLock;
 
 #[derive(Debug)]
 pub(crate) struct GitCodeConfig {
@@ -39,7 +40,7 @@ pub(crate) struct GitCodeConfig {
 
 impl Default for GitCodeConfig {
 	fn default() -> Self {
-		GitCodeConfig {
+		Self {
 			token: None,
 			base_url: "https://gitcode.com".to_string(),
 			api_url: "https://api.gitcode.com/api/v5".to_string(),
@@ -55,9 +56,22 @@ impl GitCodeConfig {
 	}
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct GitCodeClient {
 	pub(crate) config: GitCodeConfig,
+	pub(crate) client: RwLock<Arc<ClientWithMiddleware>>,
+}
+
+impl Default for GitCodeClient {
+	fn default() -> Self {
+		let client = reqwest::Client::new();
+		Self {
+			config: GitCodeConfig::default(),
+			client: RwLock::new(Arc::new(
+				ClientBuilder::new(client).with(HeaderMiddleware).with(ResponseMiddleware).build(),
+			)),
+		}
+	}
 }
 
 impl GitCodeClient {
@@ -77,17 +91,21 @@ impl Client for GitCodeClient {
 	}
 
 	fn set_proxy(&mut self, proxy: &str) -> Result<()> {
-		PROXY_URL.set(proxy.to_string()).unwrap();
+		let client = reqwest::Client::builder().proxy(Proxy::all(proxy)?).build()?;
+		*self.client.try_write().unwrap() = Arc::new(
+			ClientBuilder::new(client).with(HeaderMiddleware).with(ResponseMiddleware).build(),
+		);
 		Ok(())
 	}
 
 	async fn get_user_info(&self) -> Result<UserInfo> {
 		let (token, api_url) = (&self.config.token, &self.config.api_url);
+		let client = self.client.read().await;
 		if token.is_none() {
 			return Err(Error::TokenEmpty);
 		}
 		let url = format!("{}/user", api_url);
-		let mut request = HTTP_CLIENT.get(url);
+		let mut request = client.get(url);
 		if let Some(token) = token {
 			request = request.bearer_auth(token);
 		}
@@ -95,7 +113,7 @@ impl Client for GitCodeClient {
 		let mut user_info: JsonValue = resp.json().await?;
 		if let Some(user) = user_info.0.as_object_mut() {
 			let user_name = user.get("username").and_then(|v| v.as_str()).unwrap();
-			let repo_count = get_user_repo_count(&self.config, user_name).await?;
+			let repo_count = get_user_repo_count(client.clone(), &self.config, user_name).await?;
 			user.insert("repo_count".to_string(), Value::Number(repo_count.into()));
 		}
 		Ok(user_info.into())
@@ -104,14 +122,15 @@ impl Client for GitCodeClient {
 	async fn get_user_info_with_name(&self, user_name: &str) -> Result<UserInfo> {
 		let (token, api_url) = (&self.config.token, &self.config.api_url);
 		let url = format!("{}/users/{}", api_url, user_name);
-		let mut request = HTTP_CLIENT.get(url);
+		let client = self.client.read().await;
+		let mut request = client.get(url);
 		if let Some(token) = token {
 			request = request.bearer_auth(token);
 		}
 		let resp = request.send().await?;
 		let mut user_info: JsonValue = resp.json().await?;
 		if let Some(user) = user_info.0.as_object_mut() {
-			let repo_count = get_user_repo_count(&self.config, user_name).await?;
+			let repo_count = get_user_repo_count(client.clone(), &self.config, user_name).await?;
 			user.insert("repo_count".to_string(), Value::Number(repo_count.into()));
 		}
 		Ok(user_info.into())
@@ -120,8 +139,8 @@ impl Client for GitCodeClient {
 	async fn get_user_avatar_url(&self, user_name: &str) -> Result<String> {
 		let (web_api_url, base_url) = (&self.config.web_api_url, &self.config.base_url);
 		let url = format!("{}/uc/api/v1/user/setting/profile?username={}", web_api_url, user_name);
-		let res =
-			HTTP_CLIENT.get(url).header("Referer", base_url).send().await?.json::<Value>().await?;
+		let client = self.client.read().await;
+		let res = client.get(url).header("Referer", base_url).send().await?.json::<Value>().await?;
 		let avatar_url = res.get("avatar").and_then(|v| v.as_str()).unwrap().to_string();
 		Ok(avatar_url)
 	}
@@ -132,7 +151,8 @@ impl Client for GitCodeClient {
 			"{}/uc/api/v1/events/{}/contributions?username={}",
 			web_api_url, user_name, user_name
 		);
-		let request = HTTP_CLIENT.get(url);
+		let client = self.client.read().await;
+		let request = client.get(url);
 		let res = request.header("Referer", base_url).send().await?.json::<JsonValue>().await?;
 		Ok(res.into())
 	}
@@ -140,7 +160,8 @@ impl Client for GitCodeClient {
 	async fn get_org_info(&self, org_name: &str) -> Result<OrgInfo> {
 		let (token, web_api_url) = (&self.config.token, &self.config.web_api_url);
 		let url = format!("{}/orgs/{}", web_api_url, org_name);
-		let mut request = HTTP_CLIENT.get(url);
+		let client = self.client.read().await;
+		let mut request = client.get(url);
 		if let Some(token) = token {
 			request = request.bearer_auth(token);
 		}
@@ -155,7 +176,8 @@ impl Client for GitCodeClient {
 	) -> Result<Vec<RepoInfo>> {
 		let (token, api_url) = (&self.config.token, &self.config.api_url);
 		let url = format!("{}/orgs/{}/repos", api_url, org_name);
-		let mut request = HTTP_CLIENT.get(url);
+		let client = self.client.read().await;
+		let mut request = client.get(url);
 		let mut params: HashMap<&str, String> = HashMap::new();
 		if let Some(token) = token {
 			request = request.bearer_auth(token);
@@ -172,9 +194,9 @@ impl Client for GitCodeClient {
 
 	async fn get_org_avatar_url(&self, org_name: &str) -> Result<String> {
 		let (base_url, web_api_url) = (&self.config.base_url, &self.config.web_api_url);
+		let client = self.client.read().await;
 		let url = format!("{}/api/v2/groups/{}", web_api_url, org_name);
-		let res =
-			HTTP_CLIENT.get(url).header("Referer", base_url).send().await?.json::<Value>().await?;
+		let res = client.get(url).header("Referer", base_url).send().await?.json::<Value>().await?;
 		let avatar_url = res.get("avatar").and_then(|v| v.as_str()).unwrap().to_string();
 		Ok(avatar_url)
 	}
@@ -182,7 +204,8 @@ impl Client for GitCodeClient {
 	async fn get_repo_info(&self, repo_path: (&str, &str)) -> Result<RepoInfo> {
 		let (token, api_url) = (&self.config.token, &self.config.api_url);
 		let url = format!("{}/repos/{}/{}", api_url, repo_path.0, repo_path.1);
-		let mut request = HTTP_CLIENT.get(url);
+		let client = self.client.read().await;
+		let mut request = client.get(url);
 		if let Some(token) = token {
 			request = request.bearer_auth(token);
 		}
@@ -193,7 +216,8 @@ impl Client for GitCodeClient {
 	async fn get_user_repos(&self, option: Option<ReposListOptions>) -> Result<Vec<RepoInfo>> {
 		let (token, api_url) = (&self.config.token, &self.config.api_url);
 		let url = format!("{}/user/repos", api_url);
-		let mut request = HTTP_CLIENT.get(url);
+		let client = self.client.read().await;
+		let mut request = client.get(url);
 		let mut params: HashMap<&str, String> = HashMap::new();
 
 		if let Some(token) = token {
@@ -219,7 +243,8 @@ impl Client for GitCodeClient {
 	) -> Result<Vec<RepoInfo>> {
 		let (token, api_url) = (&self.config.token, &self.config.api_url);
 		let url = format!("{}/users/{}/repos", api_url, user_name);
-		let mut request = HTTP_CLIENT.get(url);
+		let client = self.client.read().await;
+		let mut request = client.get(url);
 		let mut params: HashMap<&str, String> = HashMap::new();
 
 		if let Some(token) = token {
@@ -251,7 +276,8 @@ impl Client for GitCodeClient {
 			repo_path.1,
 			sha.unwrap_or("HEAD")
 		);
-		let mut request = HTTP_CLIENT.get(url);
+		let client = self.client.read().await;
+		let mut request = client.get(url);
 		if let Some(token) = token {
 			request = request.bearer_auth(token);
 		}
@@ -310,7 +336,8 @@ impl Client for GitCodeClient {
 	) -> Result<Vec<CommitInfo>> {
 		let (token, api_url) = (&self.config.token, &self.config.api_url);
 		let url = format!("{}/repos/{}/{}/commits", api_url, repo_path.0, repo_path.1);
-		let mut request = HTTP_CLIENT.get(url);
+		let client = self.client.read().await;
+		let mut request = client.get(url);
 		let mut params: HashMap<&str, String> = HashMap::new();
 		if let Some(token) = token {
 			request = request.bearer_auth(token);
@@ -352,7 +379,8 @@ impl Client for GitCodeClient {
 			"{}/repos/{}/{}/collaborators/{}",
 			api_url, repo_path.0, repo_path.1, user_name
 		);
-		let request = HTTP_CLIENT.put(url).bearer_auth(token.as_ref().unwrap());
+		let client = self.client.read().await;
+		let request = client.put(url).bearer_auth(token.as_ref().unwrap());
 		let permission = match permission {
 			Some(permission) => match permission {
 				CollaboratorPermission::Admin => "admin".to_string(),
@@ -385,8 +413,9 @@ impl Client for GitCodeClient {
 		if token.is_none() {
 			return Err(Error::TokenEmpty);
 		}
+		let client = self.client.read().await;
 		let url = format!("{}/repos/{}/{}/issues", api_url, repo_path.0, repo_path.1);
-		let request = HTTP_CLIENT.post(url).bearer_auth(token.as_ref().unwrap());
+		let request = client.post(url).bearer_auth(token.as_ref().unwrap());
 		let mut req_body: HashMap<&str, String> = HashMap::new();
 		req_body.insert("title", title.to_string());
 		if let Some(body) = body {
@@ -413,7 +442,8 @@ impl Client for GitCodeClient {
 		let (token, api_url) = (&self.config.token, &self.config.api_url);
 		let url =
 			format!("{}/repos/{}/{}/issues/{}", api_url, repo_path.0, repo_path.1, issue_number);
-		let mut request = HTTP_CLIENT.get(url);
+		let client = self.client.read().await;
+		let mut request = client.get(url);
 		if let Some(token) = token {
 			request = request.bearer_auth(token);
 		};
@@ -428,7 +458,8 @@ impl Client for GitCodeClient {
 	) -> Result<Vec<IssueInfo>> {
 		let (token, api_url) = (&self.config.token, &self.config.api_url);
 		let url = format!("{}/repos/{}/{}/issues", api_url, repo_path.0, repo_path.1);
-		let mut request = HTTP_CLIENT.get(url);
+		let client = self.client.read().await;
+		let mut request = client.get(url);
 		if let Some(token) = token {
 			request = request.bearer_auth(token);
 		};
@@ -470,7 +501,8 @@ impl Client for GitCodeClient {
 			return Err(Error::TokenEmpty);
 		}
 		let url = format!("{}/repos/{}/issues/{}", api_url, repo_path.0, issue_number);
-		let request = HTTP_CLIENT.patch(url).bearer_auth(token.as_ref().unwrap());
+		let client = self.client.read().await;
+		let request = client.patch(url).bearer_auth(token.as_ref().unwrap());
 		let mut req_body: HashMap<&str, String> = HashMap::new();
 		req_body.insert("repo", repo_path.1.to_string());
 		if let Some(option) = options {
@@ -493,13 +525,17 @@ impl Client for GitCodeClient {
 	}
 }
 
-async fn get_user_repo_count(config: &GitCodeConfig, user_name: &str) -> Result<u64> {
+async fn get_user_repo_count(
+	client: Arc<ClientWithMiddleware>,
+	config: &GitCodeConfig,
+	user_name: &str,
+) -> Result<u64> {
 	let (base_url, web_api_url) = (&config.base_url, &config.web_api_url);
 	let url = format!(
 		"{}/uc/api/v1/events/{}/contributions?username={}",
 		web_api_url, user_name, user_name
 	);
-	let request = HTTP_CLIENT.get(url).header("Referer", base_url);
+	let request = client.get(url).header("Referer", base_url);
 	let resp = request.send().await?;
 	let repo_info: JsonValue = resp.json().await?;
 	let repo_count = repo_info.0.get("total").and_then(|total| total.as_u64()).unwrap_or(0);

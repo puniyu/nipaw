@@ -851,6 +851,7 @@ dependencies = [
  "reqwest-middleware",
  "serde",
  "serde_json",
+ "tokio",
 ]
 
 [[package]]
@@ -881,6 +882,7 @@ dependencies = [
  "reqwest-middleware",
  "serde",
  "serde_json",
+ "tokio",
 ]
 
 [[package]]
@@ -897,6 +899,7 @@ dependencies = [
  "scraper",
  "serde",
  "serde_json",
+ "tokio",
 ]
 
 [[package]]
@@ -913,6 +916,7 @@ dependencies = [
  "scraper",
  "serde",
  "serde_json",
+ "tokio",
 ]
 
 [[package]]

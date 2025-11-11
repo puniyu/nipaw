@@ -1,13 +1,10 @@
-mod client;
 mod common;
 mod middleware;
 
 pub use nipaw_core::Client;
 
-use crate::{
-	client::{HTTP_CLIENT, PROXY_URL},
-	common::{Html, JsonValue},
-};
+use crate::common::{Html, JsonValue};
+use crate::middleware::{HeaderMiddleware, ResponseMiddleware};
 use async_trait::async_trait;
 use nipaw_core::{
 	Result,
@@ -25,9 +22,12 @@ use nipaw_core::{
 		user::{ContributionResult, UserInfo},
 	},
 };
-use reqwest::header;
+use reqwest::{Proxy, header};
+use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use serde_json::Value;
 use std::collections::HashMap;
+use std::sync::Arc;
+use tokio::sync::RwLock;
 
 #[derive(Debug)]
 pub(crate) struct GiteeConfig {
@@ -53,14 +53,21 @@ impl GiteeConfig {
 	}
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct GiteeClient {
 	pub(crate) config: GiteeConfig,
+	pub(crate) client: RwLock<Arc<ClientWithMiddleware>>,
 }
 
-impl GiteeClient {
-	pub fn new() -> Self {
-		Self::default()
+impl Default for GiteeClient {
+	fn default() -> Self {
+		let client = reqwest::Client::new();
+		Self {
+			config: GiteeConfig::default(),
+			client: RwLock::new(Arc::new(
+				ClientBuilder::new(client).with(HeaderMiddleware).with(ResponseMiddleware).build(),
+			)),
+		}
 	}
 }
 
@@ -75,7 +82,10 @@ impl Client for GiteeClient {
 	}
 
 	fn set_proxy(&mut self, proxy: &str) -> Result<()> {
-		PROXY_URL.set(proxy.to_string()).unwrap();
+		let client = reqwest::Client::builder().proxy(Proxy::all(proxy)?).build()?;
+		*self.client.try_write().unwrap() = Arc::new(
+			ClientBuilder::new(client).with(HeaderMiddleware).with(ResponseMiddleware).build(),
+		);
 		Ok(())
 	}
 
@@ -85,8 +95,8 @@ impl Client for GiteeClient {
 			return Err(Error::TokenEmpty);
 		}
 		let url = format!("{}/user", api_url);
-		let request =
-			HTTP_CLIENT.get(url).query(&[("access_token", token.as_ref().unwrap().as_str())]);
+		let client = self.client.read().await;
+		let request = client.get(url).query(&[("access_token", token.as_ref().unwrap().as_str())]);
 
 		let resp = request.send().await?;
 		let user_info: JsonValue = resp.json().await?;
@@ -96,7 +106,8 @@ impl Client for GiteeClient {
 	async fn get_user_info_with_name(&self, user_name: &str) -> Result<UserInfo> {
 		let (token, api_url) = (&self.config.token, &self.config.api_url);
 		let url = format!("{}/users/{}", api_url, user_name);
-		let mut request = HTTP_CLIENT.get(url);
+		let client = self.client.read().await;
+		let mut request = client.get(url);
 		if let Some(token) = token {
 			request = request.query(&[("access_token", token.as_str())]);
 		}
@@ -108,7 +119,8 @@ impl Client for GiteeClient {
 	async fn get_user_avatar_url(&self, user_name: &str) -> Result<String> {
 		let base_url = &self.config.base_url;
 		let url = format!("{}/users/{}/detail", base_url, user_name);
-		let request = HTTP_CLIENT.get(url).header("Referer", base_url);
+		let client = self.client.read().await;
+		let request = client.get(url).header("Referer", base_url);
 		let resp = request.send().await?;
 		let user_info: JsonValue = resp.json().await?;
 		let avatar_url = user_info
@@ -124,7 +136,8 @@ impl Client for GiteeClient {
 	async fn get_user_contribution(&self, user_name: &str) -> Result<ContributionResult> {
 		let base_url = &self.config.base_url;
 		let url = format!("{}/{}", base_url, user_name);
-		let request = HTTP_CLIENT
+		let client = self.client.read().await;
+		let request = client
 			.get(url)
 			.header("X-Requested-With", "XMLHttpRequest")
 			.header("Accept", "application/javascript");
@@ -136,7 +149,8 @@ impl Client for GiteeClient {
 	async fn get_org_info(&self, org_name: &str) -> Result<OrgInfo> {
 		let (token, base_url) = (&self.config.token, &self.config.base_url);
 		let url = format!("{}/orgs/{}", base_url, org_name);
-		let mut request = HTTP_CLIENT.get(url);
+		let client = self.client.read().await;
+		let mut request = client.get(url);
 		if let Some(token) = token {
 			request = request.query(&[("access_token", token.as_str())]);
 		}
@@ -152,7 +166,8 @@ impl Client for GiteeClient {
 	) -> Result<Vec<RepoInfo>> {
 		let (token, api_url) = (&self.config.token, &self.config.api_url);
 		let url = format!("{}/orgs/{}/repos", api_url, org_name);
-		let mut request = HTTP_CLIENT.get(url);
+		let client = self.client.read().await;
+		let mut request = client.get(url);
 		let mut params = HashMap::new();
 		if let Some(token) = token {
 			request = request.query(&[("access_token", token.as_str())]);
@@ -171,7 +186,8 @@ impl Client for GiteeClient {
 	async fn get_org_avatar_url(&self, org_name: &str) -> Result<String> {
 		let base_url = &self.config.base_url;
 		let url = format!("{}/{}", base_url, org_name);
-		let request = HTTP_CLIENT.get(url);
+		let client = self.client.read().await;
+		let request = client.get(url);
 		let resp = request.send().await?;
 		let org_html: String = resp.text().await?;
 
@@ -187,7 +203,8 @@ impl Client for GiteeClient {
 	async fn get_repo_info(&self, repo_path: (&str, &str)) -> Result<RepoInfo> {
 		let (token, api_url) = (&self.config.token, &self.config.api_url);
 		let url = format!("{}/repos/{}/{}", api_url, repo_path.0, repo_path.1);
-		let mut request = HTTP_CLIENT.get(url);
+		let client = self.client.read().await;
+		let mut request = client.get(url);
 		if let Some(token) = token {
 			request = request.query(&[("access_token", token.as_str())]);
 		}
@@ -199,7 +216,8 @@ impl Client for GiteeClient {
 	async fn get_user_repos(&self, option: Option<ReposListOptions>) -> Result<Vec<RepoInfo>> {
 		let (token, api_url) = (&self.config.token, &self.config.api_url);
 		let url = format!("{}/user/repos", api_url);
-		let request = HTTP_CLIENT.get(url);
+		let client = self.client.read().await;
+		let request = client.get(url);
 		let mut params: HashMap<&str, String> = HashMap::new();
 		if let Some(token) = token {
 			params.insert("access_token", token.to_owned());
@@ -225,7 +243,8 @@ impl Client for GiteeClient {
 	) -> Result<Vec<RepoInfo>> {
 		let (token, api_url) = (&self.config.token, &self.config.api_url);
 		let url = format!("{}/users/{}/repos", api_url, user_name);
-		let request = HTTP_CLIENT.get(url);
+		let client = self.client.read().await;
+		let request = client.get(url);
 		let mut params: HashMap<&str, String> = HashMap::new();
 		if let Some(token) = token {
 			params.insert("access_token", token.to_owned());
@@ -256,7 +275,8 @@ impl Client for GiteeClient {
 			repo_path.1,
 			sha.unwrap_or("HEAD")
 		);
-		let mut request = HTTP_CLIENT.get(url);
+		let client = self.client.read().await;
+		let mut request = client.get(url);
 		if let Some(token) = token {
 			request = request.query(&[("access_token", token.as_str())]);
 		}
@@ -305,7 +325,8 @@ impl Client for GiteeClient {
 	) -> Result<Vec<CommitInfo>> {
 		let (token, api_url) = (&self.config.token, &self.config.api_url);
 		let url = format!("{}/repos/{}/{}/commits", api_url, repo_path.0, repo_path.1);
-		let request = HTTP_CLIENT.get(url);
+		let client = self.client.read().await;
+		let request = client.get(url);
 		let mut params: HashMap<&str, String> = HashMap::new();
 		if let Some(token) = token {
 			params.insert("access_token", token.to_owned());
@@ -348,7 +369,8 @@ impl Client for GiteeClient {
 			"{}/repos/{}/{}/collaborators/{}",
 			api_url, repo_path.0, repo_path.1, user_name
 		);
-		let request = HTTP_CLIENT.put(url);
+		let client = self.client.read().await;
+		let request = client.put(url);
 
 		let permission = match permission {
 			Some(permission) => match permission {
@@ -386,7 +408,8 @@ impl Client for GiteeClient {
 			return Err(Error::TokenEmpty);
 		}
 		let url = format!("{}/repos/{}/{}/issues", api_url, repo_path.0, repo_path.1);
-		let request = HTTP_CLIENT.put(url).query(&[("access_token", token.as_ref().unwrap())]);
+		let client = self.client.read().await;
+		let request = client.put(url).query(&[("access_token", token.as_ref().unwrap())]);
 		let mut req_body: HashMap<&str, String> = HashMap::new();
 		req_body.insert("title", title.to_string());
 		if let Some(body) = body {
@@ -412,7 +435,8 @@ impl Client for GiteeClient {
 		let (token, api_url) = (&self.config.token, &self.config.api_url);
 		let url =
 			format!("{}/repos/{}/{}/issues/{}", api_url, repo_path.0, repo_path.1, issue_number);
-		let mut request = HTTP_CLIENT.get(url);
+		let client = self.client.read().await;
+		let mut request = client.get(url);
 		if let Some(token) = token {
 			request = request.query(&[("access_token", token)]);
 		};
@@ -427,7 +451,8 @@ impl Client for GiteeClient {
 	) -> Result<Vec<IssueInfo>> {
 		let (token, api_url) = (&self.config.token, &self.config.api_url);
 		let url = format!("{}/repos/{}/{}/issues", api_url, repo_path.0, repo_path.1);
-		let mut request = HTTP_CLIENT.get(url);
+		let client = self.client.read().await;
+		let mut request = client.get(url);
 		if let Some(token) = token {
 			request = request.query(&[("access_token", token)]);
 		};
@@ -469,7 +494,8 @@ impl Client for GiteeClient {
 			return Err(Error::TokenEmpty);
 		}
 		let url = format!("{}/repos/{}/issues/{}", api_url, repo_path.0, issue_number);
-		let request = HTTP_CLIENT.patch(url).query(&[("access_token", token.as_ref().unwrap())]);
+		let client = self.client.read().await;
+		let request = client.patch(url).query(&[("access_token", token.as_ref().unwrap())]);
 		let mut req_body: HashMap<&str, String> = HashMap::new();
 		req_body.insert("repo", repo_path.1.to_string());
 		if let Some(option) = options {

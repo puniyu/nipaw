@@ -1,17 +1,13 @@
-mod client;
 mod common;
 mod middleware;
 
 pub use nipaw_core::Client;
 
-use crate::{
-	client::{HTTP_CLIENT, PROXY_URL},
-	common::JsonValue,
-};
+use crate::common::JsonValue;
+use crate::middleware::{HeaderMiddleware, ResponseMiddleware};
 use async_trait::async_trait;
 use chrono::{Datelike, Local};
 use futures::future::join_all;
-use itertools::Itertools;
 use nipaw_core::{
 	Result,
 	error::Error,
@@ -28,9 +24,12 @@ use nipaw_core::{
 		user::{ContributionResult, UserInfo},
 	},
 };
-use reqwest::{Url, header};
+use reqwest::{Proxy, header};
+use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use serde_json::Value;
 use std::collections::HashMap;
+use std::sync::Arc;
+use tokio::sync::RwLock;
 
 #[derive(Debug)]
 pub(crate) struct CnbConfig {
@@ -56,9 +55,22 @@ impl CnbConfig {
 	}
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct CnbClient {
-	config: CnbConfig,
+	pub(crate) config: CnbConfig,
+	pub(crate) client: RwLock<Arc<ClientWithMiddleware>>,
+}
+
+impl Default for CnbClient {
+	fn default() -> Self {
+		let client = reqwest::Client::new();
+		Self {
+			config: CnbConfig::default(),
+			client: RwLock::new(Arc::new(
+				ClientBuilder::new(client).with(HeaderMiddleware).with(ResponseMiddleware).build(),
+			)),
+		}
+	}
 }
 
 impl CnbClient {
@@ -78,7 +90,10 @@ impl Client for CnbClient {
 	}
 
 	fn set_proxy(&mut self, proxy: &str) -> Result<()> {
-		PROXY_URL.set(proxy.to_string()).unwrap();
+		let client = reqwest::Client::builder().proxy(Proxy::all(proxy)?).build()?;
+		*self.client.try_write().unwrap() = Arc::new(
+			ClientBuilder::new(client).with(HeaderMiddleware).with(ResponseMiddleware).build(),
+		);
 		Ok(())
 	}
 
@@ -88,7 +103,8 @@ impl Client for CnbClient {
 			return Err(Error::TokenEmpty);
 		}
 		let url = format!("{}/user", api_url);
-		let request = HTTP_CLIENT.get(url).bearer_auth(token.as_ref().unwrap());
+		let client = self.client.read().await;
+		let request = client.get(url).bearer_auth(token.as_ref().unwrap());
 		let resp = request.send().await?;
 		let mut user_info: JsonValue = resp.json().await?;
 
@@ -106,7 +122,8 @@ impl Client for CnbClient {
 	async fn get_user_info_with_name(&self, user_name: &str) -> Result<UserInfo> {
 		let (token, api_url) = (&self.config.token, &self.config.api_url);
 		let url = format!("{}/users/{}", api_url, user_name);
-		let mut request = HTTP_CLIENT.get(url);
+		let client = self.client.read().await;
+		let mut request = client.get(url);
 		if let Some(token) = token {
 			request = request.bearer_auth(token);
 		}
@@ -131,11 +148,10 @@ impl Client for CnbClient {
 
 	async fn get_user_contribution(&self, user_name: &str) -> Result<ContributionResult> {
 		let base_url = &self.config.base_url;
-		let mut url = Url::parse(&format!("{}/users/{}/calendar", base_url, user_name))?;
 		let year = Local::now().year();
-		url.query_pairs_mut().append_pair("year", &year.to_string());
-		let resp =
-			HTTP_CLIENT.get(url).header("Accept", " application/vnd.cnb.web+json").send().await?;
+		let url = format!("{}/users/{}/calendar?year={}", base_url, user_name, year);
+		let client = self.client.read().await;
+		let resp = client.get(url).header("Accept", " application/vnd.cnb.web+json").send().await?;
 		let contribution_result: JsonValue = resp.json().await?;
 		Ok(contribution_result.into())
 	}
@@ -143,7 +159,8 @@ impl Client for CnbClient {
 	async fn get_org_info(&self, org_name: &str) -> Result<OrgInfo> {
 		let (token, api_url) = (&self.config.token, &self.config.api_url);
 		let url = format!("{}/{}", api_url, org_name);
-		let mut request = HTTP_CLIENT.get(url);
+		let client = self.client.read().await;
+		let mut request = client.get(url);
 		if let Some(token) = token {
 			request = request.bearer_auth(token);
 		}
@@ -168,7 +185,8 @@ impl Client for CnbClient {
 	) -> Result<Vec<RepoInfo>> {
 		let (token, api_url) = (&self.config.token, &self.config.api_url);
 		let url = format!("{}/{}/-/repos", api_url, org_name);
-		let mut request = HTTP_CLIENT.get(url);
+		let client = self.client.read().await;
+		let mut request = client.get(url);
 		if let Some(token) = token {
 			request = request.bearer_auth(token);
 		}
@@ -193,14 +211,16 @@ impl Client for CnbClient {
 	async fn get_repo_info(&self, repo_path: (&str, &str)) -> Result<RepoInfo> {
 		let (token, api_url) = (&self.config.token, &self.config.api_url);
 		let url = format!("{}/repos/{}/{}", api_url, repo_path.0, repo_path.1);
-		let mut request = HTTP_CLIENT.get(url);
+		let client = self.client.read().await;
+		let mut request = client.get(url);
 		if let Some(token) = token {
 			request = request.bearer_auth(token);
 		}
 		let resp = request.send().await?;
 		let mut repo_info: JsonValue = resp.json().await?;
 		let default_branch =
-			get_repo_default_branch(&self.config, &repo_info, token.clone()).await?;
+			get_repo_default_branch(client.clone(), &self.config, &repo_info, token.clone())
+				.await?;
 		repo_info
 			.0
 			.as_object_mut()
@@ -212,7 +232,8 @@ impl Client for CnbClient {
 	async fn get_user_repos(&self, option: Option<ReposListOptions>) -> Result<Vec<RepoInfo>> {
 		let (token, api_url) = (&self.config.token, &self.config.api_url);
 		let url = format!("{}/user/repos", api_url);
-		let mut request = HTTP_CLIENT.get(url);
+		let client = self.client.read().await;
+		let mut request = client.get(url);
 		let mut params: HashMap<&str, String> = HashMap::new();
 		if let Some(token) = token {
 			request = request.bearer_auth(token);
@@ -237,7 +258,8 @@ impl Client for CnbClient {
 	) -> Result<Vec<RepoInfo>> {
 		let (token, api_url) = (&self.config.token, &self.config.api_url);
 		let url = format!("{}/users/{}/repos", api_url, user_name);
-		let mut request = HTTP_CLIENT.get(url);
+		let client = self.client.read().await;
+		let mut request = client.get(url);
 		let mut params: HashMap<&str, String> = HashMap::new();
 		if let Some(token) = token {
 			request = request.bearer_auth(token);
@@ -269,7 +291,8 @@ impl Client for CnbClient {
 			repo_path.1,
 			sha.unwrap_or("HEAD")
 		);
-		let mut request = HTTP_CLIENT.get(url);
+		let client = self.client.read().await;
+		let mut request = client.get(url);
 		if let Some(token) = token {
 			request = request.bearer_auth(token);
 		}
@@ -327,7 +350,8 @@ impl Client for CnbClient {
 	) -> Result<Vec<CommitInfo>> {
 		let (token, api_url) = (&self.config.token, &self.config.api_url);
 		let url = format!("{}/{}/{}/-/commits", api_url, repo_path.0, repo_path.1);
-		let mut request = HTTP_CLIENT.get(url);
+		let client = self.client.read().await;
+		let mut request = client.get(url);
 		if let Some(token) = token {
 			request = request.bearer_auth(token);
 		}
@@ -365,7 +389,8 @@ impl Client for CnbClient {
 			return Err(Error::TokenEmpty);
 		}
 		let url = format!("{}/{}/{}/-/members/{}", api_url, repo_path.0, repo_path.1, user_name);
-		let request = HTTP_CLIENT.post(url).bearer_auth(token.as_ref().unwrap());
+		let client = self.client.read().await;
+		let request = client.post(url).bearer_auth(token.as_ref().unwrap());
 		let permission = match permission {
 			Some(permission) => match permission {
 				CollaboratorPermission::Admin => "Master",
@@ -407,8 +432,9 @@ impl Client for CnbClient {
 		if token.is_none() {
 			return Err(Error::TokenEmpty);
 		}
+		let client = self.client.read().await;
 		let url = format!("{}/{}/{}/-/issues", api_url, repo_path.0, repo_path.1);
-		let request = HTTP_CLIENT.post(url).bearer_auth(token.as_ref().unwrap());
+		let request = client.post(url).bearer_auth(token.as_ref().unwrap());
 		let mut req_body: HashMap<&str, String> = HashMap::new();
 		req_body.insert("title", title.to_string());
 		if let Some(body) = body {
@@ -431,7 +457,7 @@ impl Client for CnbClient {
 			.and_then(|username| username.as_str())
 			.map(|s| s.to_string())
 			.unwrap_or_default();
-		let user_info = get_user_info(&self.config, &user_name).await?;
+		let user_info = get_user_info(client.clone(), &self.config, &user_name).await?;
 		res.0.as_object_mut().unwrap().insert("user".to_string(), serde_json::to_value(user_info)?);
 		Ok(res.into())
 	}
@@ -446,7 +472,8 @@ impl Client for CnbClient {
 			return Err(Error::TokenEmpty);
 		}
 		let url = format!("{}/{}/{}/-/issues/{}", api_url, repo_path.0, repo_path.1, issue_number);
-		let request = HTTP_CLIENT.post(url).bearer_auth(token.as_ref().unwrap());
+		let client = self.client.read().await;
+		let request = client.post(url).bearer_auth(token.as_ref().unwrap());
 		let mut res = request.send().await?.json::<JsonValue>().await?;
 		let user_name = res
 			.0
@@ -455,7 +482,7 @@ impl Client for CnbClient {
 			.and_then(|username| username.as_str())
 			.map(|s| s.to_string())
 			.unwrap_or_default();
-		let user_info = get_user_info(&self.config, &user_name).await?;
+		let user_info = get_user_info(client.clone(), &self.config, &user_name).await?;
 		res.0.as_object_mut().unwrap().insert("user".to_string(), serde_json::to_value(user_info)?);
 		Ok(res.into())
 	}
@@ -471,7 +498,8 @@ impl Client for CnbClient {
 		}
 
 		let url = format!("{}/{}/{}/-/issues", api_url, repo_path.0, repo_path.1);
-		let request = HTTP_CLIENT.get(url).bearer_auth(token.as_ref().unwrap());
+		let client = self.client.read().await;
+		let request = client.get(url).bearer_auth(token.as_ref().unwrap());
 		let mut params: HashMap<&str, String> = HashMap::new();
 		if let Some(option) = options {
 			let per_page = option.per_page.unwrap_or_default().max(100);
@@ -505,7 +533,7 @@ impl Client for CnbClient {
 				.and_then(|username| username.as_str())
 				.unwrap_or_default()
 				.to_string();
-			let user_info = get_user_info(&self.config, &user_name).await.unwrap();
+			let user_info = get_user_info(client.clone(), &self.config, &user_name).await.unwrap();
 			issue_json
 				.0
 				.as_object_mut()
@@ -532,7 +560,8 @@ impl Client for CnbClient {
 			return Err(Error::TokenEmpty);
 		}
 		let url = format!("{}/{}/{}/-/issues/{}", api_url, repo_path.0, repo_path.1, issue_number);
-		let request = HTTP_CLIENT.put(url).bearer_auth(token.as_ref().unwrap());
+		let client = self.client.read().await;
+		let request = client.put(url).bearer_auth(token.as_ref().unwrap());
 		let mut req_body: HashMap<&str, String> = HashMap::new();
 		if let Some(option) = options {
 			if let Some(title) = option.title {
@@ -557,13 +586,14 @@ impl Client for CnbClient {
 			.and_then(|username| username.as_str())
 			.map(|s| s.to_string())
 			.unwrap_or_default();
-		let user_info = get_user_info(&self.config, &user_name).await?;
+		let user_info = get_user_info(client.clone(), &self.config, &user_name).await?;
 		res.0.as_object_mut().unwrap().insert("user".to_string(), serde_json::to_value(user_info)?);
 		Ok(res.into())
 	}
 }
 
 async fn get_repo_default_branch(
+	client: Arc<ClientWithMiddleware>,
 	config: &CnbConfig,
 	repo_info: &JsonValue,
 	token: Option<String>,
@@ -590,7 +620,8 @@ async fn get_repo_default_branch(
 			"{}/{}/{}/-/git/refs?page=1&page_size=5000&prefix=branch",
 			config.base_url, owner, repo
 		);
-		let request = HTTP_CLIENT.get(url).header("Accept", "application/vnd.cnb.web+json");
+
+		let request = client.get(url).header("Accept", "application/vnd.cnb.web+json");
 		let res = request.send().await?.json::<Vec<Value>>().await?;
 		let default_branch = res
 			.into_iter()
@@ -600,7 +631,7 @@ async fn get_repo_default_branch(
 		Ok(default_branch.unwrap())
 	} else {
 		let url = format!("{}/repos/{}/{}/-/git/head", config.api_url, owner, repo);
-		let mut request = HTTP_CLIENT.get(url);
+		let mut request = client.get(url);
 		if let Some(token) = token {
 			request = request.bearer_auth(token);
 		}
@@ -610,9 +641,13 @@ async fn get_repo_default_branch(
 	}
 }
 
-async fn get_user_info(config: &CnbConfig, user_name: &str) -> Result<UserInfo> {
+async fn get_user_info(
+	client: Arc<ClientWithMiddleware>,
+	config: &CnbConfig,
+	user_name: &str,
+) -> Result<UserInfo> {
 	let url = format!("{}/users/{}", config.base_url, user_name);
-	let request = HTTP_CLIENT.get(url);
+	let request = client.get(url);
 	let resp = request.send().await?.json::<JsonValue>().await?;
 	Ok(resp.into())
 }
