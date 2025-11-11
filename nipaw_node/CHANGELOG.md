@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.0](https://github.com/puniyu/nipaw/compare/node-v1.7.2...node-v1.8.0) (2025-11-11)
+
+
+### ✨ 新功能
+
+* **http:** 引入 tokio 并重构 HTTP 客户端实现 ([95d27a3](https://github.com/puniyu/nipaw/commit/95d27a314eaf7a1f6bff80e388717fd61368aa93))
+
 ## [1.7.2](https://github.com/puniyu/nipaw/compare/node-v1.7.1...node-v1.7.2) (2025-11-11)
 
 

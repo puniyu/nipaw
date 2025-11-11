@@ -1,5 +1,12 @@
 # 变更日志
 
+## [0.12.0](https://github.com/puniyu/nipaw/compare/gitcode-v0.11.1...gitcode-v0.12.0) (2025-11-11)
+
+
+### ✨ 新功能
+
+* **http:** 引入 tokio 并重构 HTTP 客户端实现 ([95d27a3](https://github.com/puniyu/nipaw/commit/95d27a314eaf7a1f6bff80e388717fd61368aa93))
+
 ## [0.11.1](https://github.com/puniyu/nipaw/compare/gitcode-v0.11.0...gitcode-v0.11.1) (2025-11-11)
 
 
