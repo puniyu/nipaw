@@ -862,7 +862,7 @@ dependencies = [
  "reqwest",
  "reqwest-middleware",
  "serde",
-    "serde_json",
+ "serde_json",
  "strum",
  "thiserror 2.0.17",
  "url",

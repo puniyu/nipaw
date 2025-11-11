@@ -316,7 +316,8 @@ macro_rules! impl_client {
 				/// 更新issue信息
 				///
 				/// ## 参数
-				/// - `repo_path` - 仓库路径，格式为 `(owner, repo)`
+				/// - `owner` - 仓库所有者
+				/// - `repo` - 仓库名称
 				/// - `issue_number` - issue编号
 				/// - `options` - 更新issue选项, 详见 [UpdateIssueOptions]
 				///
