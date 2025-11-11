@@ -393,11 +393,11 @@ impl Client for GitCodeClient {
 			req_body.insert("body", body.to_string());
 		}
 		if let Some(option) = option {
-			if !option.labels.is_empty() {
-				req_body.insert("labels", option.labels.join(","));
+			if let Some(labels) = option.labels {
+				req_body.insert("labels", labels.join(","));
 			}
-			if !option.assignees.is_empty() {
-				req_body.insert("assignees", option.assignees.join(","));
+			if let Some(assignees) = option.assignees {
+				req_body.insert("assignees", assignees.join(","));
 			}
 		};
 
@@ -438,8 +438,8 @@ impl Client for GitCodeClient {
 			params.insert("per_page", per_page.to_string());
 			let page = option.page.unwrap_or_default();
 			params.insert("page", page.to_string());
-			if !option.labels.is_empty() {
-				params.insert("labels", option.labels.join(","));
+			if let Some(labels) = option.labels {
+				params.insert("labels", labels.join(","));
 			}
 			if let Some(state) = option.state {
 				let state_type = match state {

@@ -75,9 +75,9 @@ impl Default for OrgRepoListOptions {
 #[derive(Debug, Deserialize, Serialize, Default)]
 pub struct CreateIssueOptions {
 	/// 标签
-	pub labels: Vec<String>,
+	pub labels: Option<Vec<String>>,
 	/// 分配的用户名
-	pub assignees: Vec<String>,
+	pub assignees: Option<Vec<String>>,
 }
 #[derive(Debug, Deserialize, Serialize, Default)]
 pub struct UpdateIssueOptions {
@@ -98,7 +98,7 @@ pub struct IssueListOptions {
 	#[serde(default = "default_page")]
 	pub page: Option<u32>,
 	/// 标签
-	pub labels: Vec<String>,
+	pub labels: Option<Vec<String>>,
 	/// 创建者
 	pub creator: Option<String>,
 	/// 分配的用户名
