@@ -1,5 +1,12 @@
 # 变更日志
 
+## [0.11.1](https://github.com/puniyu/nipaw/compare/core-v0.11.0...core-v0.11.1) (2025-11-11)
+
+
+### 🐛 错误修复
+
+* **option:** 将标签和分配用户字段改为可选 ([7ca37b1](https://github.com/puniyu/nipaw/commit/7ca37b1db732707e876d633717602049ac781f3e))
+
 ## [0.11.0](https://github.com/puniyu/nipaw/compare/core-v0.10.1...core-v0.11.0) (2025-11-11)
 
 

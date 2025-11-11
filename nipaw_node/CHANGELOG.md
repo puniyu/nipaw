@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.7.1](https://github.com/puniyu/nipaw/compare/node-v1.7.0...node-v1.7.1) (2025-11-11)
+
+
+### 🐛 错误修复
+
+* **option:** 将标签和分配用户字段改为可选 ([7ca37b1](https://github.com/puniyu/nipaw/commit/7ca37b1db732707e876d633717602049ac781f3e))
+
+
+### 🎡 持续集成
+
+* **workflow:** 添加节点标签名输出和上传发布功能 ([d7a27a6](https://github.com/puniyu/nipaw/commit/d7a27a68d8214a518b2183e26d447270229011b1))
+
 ## [1.7.0](https://github.com/puniyu/nipaw/compare/node-v1.6.1...node-v1.7.0) (2025-11-11)
 
 
