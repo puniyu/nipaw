@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.7.2](https://github.com/puniyu/nipaw/compare/node-v1.7.1...node-v1.7.2) (2025-11-11)
+
+
+### 🐛 错误修复
+
+* **issue:** 修复创建和更新时间字段映射问题 ([4846df6](https://github.com/puniyu/nipaw/commit/4846df6f2d9e7c2b71c78520a7d9d74d8869b5ca))
+* **platform:** 统一接口参数命名 ([70c1e40](https://github.com/puniyu/nipaw/commit/70c1e40a48725c3f04a2d5539ad1bdc158f11071))
+
 ## [1.7.1](https://github.com/puniyu/nipaw/compare/node-v1.7.0...node-v1.7.1) (2025-11-11)
 
 

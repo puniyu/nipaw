@@ -1,8 +1,8 @@
 {
   "nipaw_core": "0.11.1",
   "nipaw_cnb": "0.11.1",
-  "nipaw_github": "0.11.1",
+  "nipaw_github": "0.11.2",
   "nipaw_gitee": "0.11.1",
   "nipaw_gitcode": "0.11.1",
-  "nipaw_node": "1.7.1"
+  "nipaw_node": "1.7.2"
 }
