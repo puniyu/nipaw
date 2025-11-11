@@ -93,8 +93,8 @@ impl From<nipaw_core::types::issue::IssueInfo> for IssueInfo {
 			body: value.body,
 			labels: value.labels.into_iter().map(Into::into).collect(),
 			user: value.user.into(),
-			created_at: Default::default(),
-			updated_at: Default::default(),
+			created_at: value.created_at,
+			updated_at: value.updated_at,
 			closed_at: None,
 		}
 	}
