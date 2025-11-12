@@ -1,6 +1,6 @@
 [package]
 name = "nipaw_gitee"
-version = "0.12.0"
+version = "0.12.1"
 description = "Gitee provider for nipaw_core"
 authors.workspace = true
 license.workspace = true
