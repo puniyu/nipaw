@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.1](https://github.com/puniyu/nipaw/compare/node-v1.8.0...node-v1.8.1) (2025-11-12)
+
+
+### 🐛 错误修复
+
+* **issue:** 修复 issue 关闭时间字段映射问题 ([4792480](https://github.com/puniyu/nipaw/commit/47924800b209acff604f5a15ae79ecc86b2f8fda))
+
 ## [1.8.0](https://github.com/puniyu/nipaw/compare/node-v1.7.2...node-v1.8.0) (2025-11-11)
 
 
