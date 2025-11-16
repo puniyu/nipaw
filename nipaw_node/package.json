@@ -34,7 +34,7 @@
     "dtsHeader": "// powered by nipaw_core\n"
   },
   "engines": {
-    "node": ">= 12.22.0 < 13 || >= 14.17.0 < 15 || >= 15.12.0 < 16 || >= 16.0.0"
+    "node": "^20.19.0 || >=22.12.0"
   },
   "scripts": {
     "artifacts": "napi artifacts",

@@ -2,42 +2,5 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "github>puniyu/.github//.github/renovate"
-  ],
-  "constraints": {
-    "node": ">=20.0.0"
-  },
-  "packageRules": [
-    {
-      "groupName": "nipaw packages",
-      "matchManagers": ["cargo"],
-      "schedule": ["at any time"],
-      "labels": [
-        "dependencies"
-      ]
-    },
-    {
-      "groupName": "npm packages",
-      "matchManagers": [
-        "npm"
-      ],
-      "schedule": [
-        "at any time"
-      ],
-      "labels": [
-        "dependencies"
-      ]
-    },
-    {
-      "groupName": "github actions",
-      "matchManagers": [
-        "github-actions"
-      ],
-      "schedule": [
-        "at any time"
-      ],
-      "labels": [
-        "dependencies"
-      ]
-    }
   ]
 }
