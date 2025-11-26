@@ -26,7 +26,7 @@ jobs:
           targets: ${{ matrix.platform.target }}
 
       - name: 设置 rust 缓存
-        uses: swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1 # v2.8.1
+        uses: swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
           prefix-key: ${{ env.APP_NAME }}
 
@@ -72,7 +72,7 @@ jobs:
           rustup target add ${{ matrix.platform.target }}
 
       - name: 设置 rust 缓存
-        uses: swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1 # v2.8.1
+        uses: swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
           prefix-key: ${{ env.APP_NAME }}
 
@@ -117,7 +117,7 @@ jobs:
           targets: ${{ matrix.platform.target }}
 
       - name: 设置 rust 缓存
-        uses: swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1 # v2.8.1
+        uses: swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
           prefix-key: ${{ env.APP_NAME }}
 
