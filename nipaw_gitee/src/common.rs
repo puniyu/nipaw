@@ -21,9 +21,9 @@ impl From<JsonValue> for UserInfo {
 		let user_info = json_value.0;
 		Self {
 			login: user_info.get("login").and_then(|v| v.as_str()).unwrap().to_string(),
-			name: user_info.get("name").and_then(|v| v.as_str()).map(|s| s.to_string()),
+			name: user_info.get("name").and_then(|v| v.as_str()).filter(|s| !s.is_empty()).map(|s| s.to_string()),
 			avatar_url: user_info.get("avatar_url").and_then(|v| v.as_str()).unwrap().to_string(),
-			email: user_info.get("email").and_then(|v| v.as_str()).map(|s| s.to_string()),
+			email: user_info.get("email").and_then(|v| v.as_str()).filter(|s| !s.is_empty()).map(|s| s.to_string()),
 			followers: user_info.get("followers").and_then(|v| v.as_u64()).unwrap(),
 			following: user_info.get("following").and_then(|v| v.as_u64()).unwrap(),
 			public_repo_count: user_info.get("public_repos").and_then(|v| v.as_u64()).unwrap(),
@@ -49,11 +49,12 @@ impl From<JsonValue> for RepoInfo {
 			description: repo_info
 				.get("description")
 				.and_then(|v| v.as_str())
+				.filter(|s| !s.is_empty())
 				.map(|s| s.to_string()),
 			visibility: if is_public { Visibility::Public } else { Visibility::Private },
 			fork: repo_info.get("fork").and_then(|v| v.as_bool()).unwrap_or(false),
 			fork_count: repo_info.get("forks_count").and_then(|v| v.as_u64()).unwrap_or(0),
-			language: repo_info.get("language").and_then(|v| v.as_str()).map(|s| s.to_string()),
+			language: repo_info.get("language").and_then(|v| v.as_str()).filter(|s| !s.is_empty()).map(|s| s.to_string()),
 			star_count: repo_info.get("stargazers_count").and_then(|v| v.as_u64()).unwrap_or(0),
 			default_branch: repo_info
 				.get("default_branch")
@@ -172,7 +173,7 @@ impl From<JsonValue> for commit::UserInfo {
 		let user_info = user.0;
 		Self {
 			name: user_info.get("name").and_then(|v| v.as_str()).unwrap().to_string(),
-			email: user_info.get("email").and_then(|v| v.as_str()).map(|s| s.to_string()),
+			email: user_info.get("email").and_then(|v| v.as_str()).filter(|s| !s.is_empty()).map(|s| s.to_string()),
 			avatar_url: user_info.get("avatar_url").and_then(|v| v.as_str()).unwrap().to_string(),
 			date: user_info
 				.get("date")
@@ -201,12 +202,13 @@ impl From<JsonValue> for OrgInfo {
 		let org_info = org.0;
 		Self {
 			login: org_info.get("login").and_then(|v| v.as_str()).unwrap().to_string(),
-			name: org_info.get("name").and_then(|v| v.as_str()).map(|s| s.to_string()),
-			email: org_info.get("email").and_then(|v| v.as_str()).map(|s| s.to_string()),
+			name: org_info.get("name").and_then(|v| v.as_str()).filter(|s| !s.is_empty()).map(|s| s.to_string()),
+			email: org_info.get("email").and_then(|v| v.as_str()).filter(|s| !s.is_empty()).map(|s| s.to_string()),
 			avatar_url: org_info.get("avatar_url").and_then(|v| v.as_str()).unwrap().to_string(),
 			description: org_info
 				.get("description")
 				.and_then(|v| v.as_str())
+				.filter(|s| !s.is_empty())
 				.map(|s| s.to_string()),
 			follow_count: org_info.get("follow_count").and_then(|v| v.as_u64()).unwrap_or(0),
 		}
@@ -238,7 +240,7 @@ impl From<JsonValue> for IssueInfo {
 			number: issue_info.get("number").and_then(|v| v.as_u64()).unwrap().to_string(),
 			state: if is_open { StateType::Opened } else { StateType::Closed },
 			title: issue_info.get("title").and_then(|v| v.as_str()).unwrap().to_string(),
-			body: issue_info.get("body").and_then(|v| v.as_str()).map(|s| s.to_string()),
+			body: issue_info.get("body").and_then(|v| v.as_str()).filter(|s| !s.is_empty()).map(|s| s.to_string()),
 			labels: JsonValue(labels_info).into(),
 			user: JsonValue(user_info).into(),
 			created_at: issue_info
@@ -269,7 +271,7 @@ impl From<JsonValue> for issue::UserInfo {
 		Self {
 			name: user_info.get("name").and_then(|v| v.as_str()).unwrap().to_string(),
 			avatar_url: user_info.get("avatar_url").and_then(|v| v.as_str()).unwrap().to_string(),
-			email: user_info.get("email").and_then(|v| v.as_str()).map(|s| s.to_string()),
+			email: user_info.get("email").and_then(|v| v.as_str()).filter(|s| !s.is_empty()).map(|s| s.to_string()),
 		}
 	}
 }

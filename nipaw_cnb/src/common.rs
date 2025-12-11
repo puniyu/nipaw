@@ -21,9 +21,9 @@ impl From<JsonValue> for UserInfo {
 		let base_url = "https://cnb.cool";
 		Self {
 			login: login.to_string(),
-			name: user_info.get("nickname").and_then(|v| v.as_str()).map(|s| s.to_string()),
+			name: user_info.get("nickname").and_then(|v| v.as_str()).filter(|s| !s.is_empty()).map(|s| s.to_string()),
 			avatar_url: format!("{}/{}", base_url, login),
-			email: user_info.get("email").and_then(|v| v.as_str()).map(|s| s.to_string()),
+			email: user_info.get("email").and_then(|v| v.as_str()).filter(|s| !s.is_empty()).map(|s| s.to_string()),
 			followers: user_info.get("follower_count").and_then(|v| v.as_u64()).unwrap(),
 			following: user_info.get("follow_count").and_then(|v| v.as_u64()).unwrap(),
 			public_repo_count: user_info.get("repo_count").and_then(|v| v.as_u64()).unwrap_or(0),
@@ -52,6 +52,7 @@ impl From<JsonValue> for RepoInfo {
 			description: repo_info
 				.get("description")
 				.and_then(|v| v.as_str())
+				.filter(|s| !s.is_empty())
 				.map(|s| s.to_string()),
 			visibility: if is_public { Visibility::Public } else { Visibility::Private },
 			fork: repo_info
@@ -60,7 +61,7 @@ impl From<JsonValue> for RepoInfo {
 				.and_then(|v| v.as_str())
 				.is_some(),
 			fork_count: repo_info.get("fork_count").and_then(|v| v.as_u64()).unwrap_or(0),
-			language: repo_info.get("language").and_then(|v| v.as_str()).map(|s| s.to_string()),
+			language: repo_info.get("language").and_then(|v| v.as_str()).filter(|s| !s.is_empty()).map(|s| s.to_string()),
 			star_count: repo_info.get("star_count").and_then(|v| v.as_u64()).unwrap_or(0),
 			default_branch: repo_info
 				.get("default_branch")
@@ -163,7 +164,7 @@ impl From<JsonValue> for commit::UserInfo {
 		let user_info = value.0;
 		Self {
 			name: user_info.get("name").and_then(|v| v.as_str()).unwrap().to_string(),
-			email: user_info.get("email").and_then(|v| v.as_str()).map(|s| s.to_string()),
+			email: user_info.get("email").and_then(|v| v.as_str()).filter(|s| !s.is_empty()).map(|s| s.to_string()),
 			avatar_url: user_info.get("avatar_url").and_then(|v| v.as_str()).unwrap().to_string(),
 			date: user_info
 				.get("date")
@@ -192,12 +193,13 @@ impl From<JsonValue> for OrgInfo {
 		let org_info = json_value.0;
 		Self {
 			login: org_info.get("login").and_then(|v| v.as_str()).unwrap().to_string(),
-			name: org_info.get("name").and_then(|v| v.as_str()).map(|s| s.to_string()),
-			email: org_info.get("email").and_then(|v| v.as_str()).map(|s| s.to_string()),
+			name: org_info.get("name").and_then(|v| v.as_str()).filter(|s| !s.is_empty()).map(|s| s.to_string()),
+			email: org_info.get("email").and_then(|v| v.as_str()).filter(|s| !s.is_empty()).map(|s| s.to_string()),
 			avatar_url: org_info.get("avatar_url").and_then(|v| v.as_str()).unwrap().to_string(),
 			description: org_info
 				.get("description")
 				.and_then(|v| v.as_str())
+				.filter(|s| !s.is_empty())
 				.map(|s| s.to_string()),
 			follow_count: org_info.get("followers").and_then(|v| v.as_u64()).unwrap_or(0),
 		}
@@ -215,7 +217,7 @@ impl From<JsonValue> for IssueInfo {
 			number: issue_info.get("number").and_then(|v| v.as_str()).unwrap().to_string(),
 			state: if is_open { StateType::Opened } else { StateType::Closed },
 			title: issue_info.get("title").and_then(|v| v.as_str()).unwrap().to_string(),
-			body: issue_info.get("body").and_then(|v| v.as_str()).map(|s| s.to_string()),
+			body: issue_info.get("body").and_then(|v| v.as_str()).filter(|s| !s.is_empty()).map(|s| s.to_string()),
 			labels: JsonValue(labels_info).into(),
 			user: JsonValue(user_info).into(),
 			created_at: issue_info
