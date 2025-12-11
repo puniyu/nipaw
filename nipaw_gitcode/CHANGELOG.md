@@ -1,5 +1,13 @@
 # 变更日志
 
+## [0.12.1](https://github.com/puniyu/nipaw/compare/gitcode-v0.12.0...gitcode-v0.12.1) (2025-12-11)
+
+
+### 🐛 错误修复
+
+* **api:** 调整默认分页参数以提高一致性 ([ef96dbe](https://github.com/puniyu/nipaw/commit/ef96dbeecefee60d053775af5736fefb9fc5cc6b))
+* **common:** 过滤空字符串字段值 ([49d52d7](https://github.com/puniyu/nipaw/commit/49d52d7469cf38a0439bf5d76929313c8def7752))
+
 ## [0.12.0](https://github.com/puniyu/nipaw/compare/gitcode-v0.11.1...gitcode-v0.12.0) (2025-11-11)
 
 
