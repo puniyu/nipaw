@@ -27,12 +27,12 @@ pub enum CollaboratorPermission {
 	Pull,
 }
 
-impl From<CollaboratorPermission> for nipaw_core::CollaboratorPermission {
+impl From<CollaboratorPermission> for nipaw_core::types::collaborator::CollaboratorPermission {
 	fn from(permission: CollaboratorPermission) -> Self {
 		match permission {
-			CollaboratorPermission::Admin => nipaw_core::CollaboratorPermission::Admin,
-			CollaboratorPermission::Push => nipaw_core::CollaboratorPermission::Push,
-			CollaboratorPermission::Pull => nipaw_core::CollaboratorPermission::Pull,
+			CollaboratorPermission::Admin => nipaw_core::types::collaborator::CollaboratorPermission::Admin,
+			CollaboratorPermission::Push => nipaw_core::types::collaborator::CollaboratorPermission::Push,
+			CollaboratorPermission::Pull => nipaw_core::types::collaborator::CollaboratorPermission::Pull,
 		}
 	}
 }
