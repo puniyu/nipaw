@@ -5,6 +5,18 @@
     {
       "type": "cargo-workspace",
       "updatePeerDependencies": true
+    },
+        {
+      "type": "linked-versions",
+      "groupName": "nipaw",
+      "components": [
+        "core",
+        "cnb",
+        "github",
+        "gitee",
+        "gitcode",
+        "node"
+      ]
     }
   ],
   "include-component-in-tag": true,
