@@ -1,6 +1,6 @@
 [package]
 name = "nipaw_github"
-version = "0.12.0"
+version = "0.12.1"
 description = "Github provider for nipaw_core"
 authors.workspace = true
 license.workspace = true

@@ -1,5 +1,18 @@
 # 变更日志
 
+## [0.12.1](https://github.com/puniyu/nipaw/compare/gitee-v0.12.0...gitee-v0.12.1) (2025-12-11)
+
+
+### 🐛 错误修复
+
+* **api:** 调整默认分页参数以提高一致性 ([ef96dbe](https://github.com/puniyu/nipaw/commit/ef96dbeecefee60d053775af5736fefb9fc5cc6b))
+* **common:** 过滤空字符串字段值 ([49d52d7](https://github.com/puniyu/nipaw/commit/49d52d7469cf38a0439bf5d76929313c8def7752))
+
+
+### 🔧 其他更新
+
+* **deps:** update rust crate scraper to v0.25.0 ([85695c9](https://github.com/puniyu/nipaw/commit/85695c9bb3ca7d1dd417e776b752c265346610ee))
+
 ## [0.12.0](https://github.com/puniyu/nipaw/compare/gitee-v0.11.1...gitee-v0.12.0) (2025-11-11)
 
 

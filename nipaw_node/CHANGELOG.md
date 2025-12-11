@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.8.1](https://github.com/puniyu/nipaw/compare/node-v1.8.0...node-v1.8.1) (2025-12-11)
+
+
+### 🐛 错误修复
+
+* **issue:** 修复 issue 关闭时间字段映射问题 ([4792480](https://github.com/puniyu/nipaw/commit/47924800b209acff604f5a15ae79ecc86b2f8fda))
+
+
+### 🔧 其他更新
+
+* **deps:** update dependency @napi-rs/cli to v3.5.0 ([#65](https://github.com/puniyu/nipaw/issues/65)) ([9607dcf](https://github.com/puniyu/nipaw/commit/9607dcf14e0e3e627777adcea87ce99047ed90ba))
+* **deps:** update pnpm to v10.22.0 ([2922512](https://github.com/puniyu/nipaw/commit/2922512a2406262d98c5ec2328ad02ba333a3a2a))
+* **deps:** update pnpm to v10.23.0 ([d8f833e](https://github.com/puniyu/nipaw/commit/d8f833e96baa0deeb048da6b5a4c8f5490323af2))
+* **deps:** update pnpm to v10.24.0 ([bad7ef6](https://github.com/puniyu/nipaw/commit/bad7ef6861dc6dcee2ab8a1bb955fe2c8805014e))
+* **deps:** update pnpm to v10.25.0 ([3d9678a](https://github.com/puniyu/nipaw/commit/3d9678a46401521282856001c2e2384630b6449e))
+* **deps:** update rust crate napi to v3.6.1 ([#68](https://github.com/puniyu/nipaw/issues/68)) ([831113f](https://github.com/puniyu/nipaw/commit/831113f8530e731a3d71e7cabf7338122897465b))
+* **deps:** update rust crates ([4bce7b0](https://github.com/puniyu/nipaw/commit/4bce7b0113d4238d0a0b8e5820dc953d74142ee9))
+* **deps:** update rust crates ([a10acc6](https://github.com/puniyu/nipaw/commit/a10acc60163b1de1f39539dd2405c6b10bc3c53c))
+* **deps:** 更新 renovate 配置并调整 node 版本要求 ([40fe39f](https://github.com/puniyu/nipaw/commit/40fe39fdff1075f137f09167f0f6255d6081a145))
+
 ## [1.8.0](https://github.com/puniyu/nipaw/compare/node-v1.7.2...node-v1.8.0) (2025-11-11)
 
 
