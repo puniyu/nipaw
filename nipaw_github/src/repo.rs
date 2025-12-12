@@ -1,9 +1,8 @@
-use crate::common::JsonValue;
 use crate::GitHubClientInner;
+use crate::common::JsonValue;
 use async_trait::async_trait;
 use http::header;
-use nipaw_core::types::collaborator::{CollaboratorPermission, CollaboratorResult};
-use nipaw_core::types::repo::RepoInfo;
+use nipaw_core::types::repo::{CollaboratorPermission, CollaboratorResult, RepoInfo};
 use nipaw_core::{Repo, Result};
 use std::sync::Arc;
 

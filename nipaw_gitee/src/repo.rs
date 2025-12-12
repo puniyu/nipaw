@@ -1,8 +1,7 @@
-use crate::common::JsonValue;
 use crate::GiteeClientInner;
+use crate::common::JsonValue;
 use async_trait::async_trait;
-use nipaw_core::types::collaborator::{CollaboratorPermission, CollaboratorResult};
-use nipaw_core::types::repo::RepoInfo;
+use nipaw_core::types::repo::{CollaboratorPermission, CollaboratorResult, RepoInfo};
 use nipaw_core::{Error, Repo, Result};
 use reqwest::header;
 use std::sync::Arc;

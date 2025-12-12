@@ -1,7 +1,7 @@
-use crate::common::JsonValue;
 use crate::GiteeClientInner;
+use crate::common::JsonValue;
 use async_trait::async_trait;
-use nipaw_core::option::{CreateIssueOptions, IssueListOptions, UpdateIssueOptions};
+use nipaw_core::option::issue::{CreateOptions, ListOptions, UpdateOptions};
 use nipaw_core::types::issue::{IssueInfo, StateType};
 use nipaw_core::{Error, Issue, Result};
 use std::collections::HashMap;
@@ -16,7 +16,7 @@ impl Issue for GiteeIssue {
 		repo_path: (&str, &str),
 		title: &str,
 		body: Option<&str>,
-		option: Option<CreateIssueOptions>,
+		option: Option<CreateOptions>,
 	) -> Result<IssueInfo> {
 		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
 		if token.is_none() {
@@ -58,7 +58,7 @@ impl Issue for GiteeIssue {
 	async fn list(
 		&self,
 		repo_path: (&str, &str),
-		options: Option<IssueListOptions>,
+		options: Option<ListOptions>,
 	) -> Result<Vec<IssueInfo>> {
 		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
 		let url = format!("{}/repos/{}/{}/issues", api_url, repo_path.0, repo_path.1);
@@ -98,7 +98,7 @@ impl Issue for GiteeIssue {
 		&self,
 		repo_path: (&str, &str),
 		issue_number: &str,
-		options: Option<UpdateIssueOptions>,
+		options: Option<UpdateOptions>,
 	) -> Result<IssueInfo> {
 		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
 		if token.is_none() {

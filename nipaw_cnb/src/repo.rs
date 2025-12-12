@@ -1,8 +1,7 @@
 use crate::common::JsonValue;
-use crate::{get_repo_default_branch, CnbClientInner};
+use crate::{CnbClientInner, get_repo_default_branch};
 use async_trait::async_trait;
-use nipaw_core::types::collaborator::{CollaboratorPermission, CollaboratorResult};
-use nipaw_core::types::repo::RepoInfo;
+use nipaw_core::types::repo::{CollaboratorPermission, CollaboratorResult, RepoInfo};
 use nipaw_core::{Error, Repo, Result};
 use reqwest::header;
 use serde_json::Value;

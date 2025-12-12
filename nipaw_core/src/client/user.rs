@@ -1,4 +1,4 @@
-use crate::option::ReposListOptions;
+use crate::option::repo::ListOptions;
 use crate::types::repo::RepoInfo;
 use crate::types::user::{ContributionResult, UserInfo};
 use async_trait::async_trait;
@@ -47,6 +47,6 @@ pub trait User: Send + Sync {
 	async fn repo_list(
 		&self,
 		user_name: Option<&str>,
-		option: Option<ReposListOptions>,
+		option: Option<ListOptions>,
 	) -> crate::Result<Vec<RepoInfo>>;
 }

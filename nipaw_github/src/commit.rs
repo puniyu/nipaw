@@ -1,12 +1,12 @@
+use crate::GitHubClientInner;
+use crate::common::JsonValue;
+use async_trait::async_trait;
+use nipaw_core::option::commit::ListOptions;
+use nipaw_core::types::commit::CommitInfo;
+use nipaw_core::{Commit, Result};
+use serde_json::Value;
 use std::collections::HashMap;
 use std::sync::Arc;
-use nipaw_core::{Commit, Result};
-use async_trait::async_trait;
-use serde_json::Value;
-use nipaw_core::option::CommitListOptions;
-use nipaw_core::types::commit::CommitInfo;
-use crate::common::JsonValue;
-use crate::GitHubClientInner;
 
 pub struct GitHubCommit(pub(crate) Arc<GitHubClientInner>);
 
@@ -50,7 +50,7 @@ impl Commit for GitHubCommit {
 		{
 			author_obj.insert("avatar_url".to_string(), Value::String(author_avatar_url));
 		}
-		
+
 		if let Some(committer_obj) = res
 			.0
 			.get_mut("commit")
@@ -62,8 +62,12 @@ impl Commit for GitHubCommit {
 		}
 		Ok(res.into())
 	}
-	
-	async fn list(&self, repo_path: (&str, &str), option: Option<CommitListOptions>) -> Result<Vec<CommitInfo>> {
+
+	async fn list(
+		&self,
+		repo_path: (&str, &str),
+		option: Option<ListOptions>,
+	) -> Result<Vec<CommitInfo>> {
 		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
 		let url = format!("{}/repos/{}/{}/commits", api_url, repo_path.0, repo_path.1);
 		let client = self.0.client.read().await;
@@ -72,7 +76,7 @@ impl Commit for GitHubCommit {
 		if let Some(token) = token {
 			request = request.bearer_auth(token);
 		}
-		
+
 		if let Some(option) = option {
 			let per_page = option.per_page.unwrap_or(30).max(100);
 			params.insert("per_page", per_page.to_string());

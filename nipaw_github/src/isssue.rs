@@ -1,17 +1,23 @@
+use crate::GitHubClientInner;
+use crate::common::JsonValue;
+use async_trait::async_trait;
+use nipaw_core::option::issue::{CreateOptions, ListOptions, UpdateOptions};
+use nipaw_core::types::issue::{IssueInfo, StateType};
+use nipaw_core::{Error, Issue, Result};
 use std::collections::HashMap;
 use std::sync::Arc;
-use nipaw_core::{Error, Issue, Result};
-use async_trait::async_trait;
-use nipaw_core::option::{CreateIssueOptions, IssueListOptions, UpdateIssueOptions};
-use nipaw_core::types::issue::{IssueInfo, StateType};
-use crate::common::JsonValue;
-use crate::GitHubClientInner;
 
 pub struct GitHubIssue(pub(crate) Arc<GitHubClientInner>);
 
 #[async_trait]
 impl Issue for GitHubIssue {
-	async fn create(&self, repo_path: (&str, &str), title: &str, body: Option<&str>, option: Option<CreateIssueOptions>) -> Result<IssueInfo> {
+	async fn create(
+		&self,
+		repo_path: (&str, &str),
+		title: &str,
+		body: Option<&str>,
+		option: Option<CreateOptions>,
+	) -> Result<IssueInfo> {
 		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
 		if token.is_none() {
 			return Err(Error::TokenEmpty);
@@ -35,7 +41,7 @@ impl Issue for GitHubIssue {
 		let res = request.json(&req_body).send().await?.json::<JsonValue>().await?;
 		Ok(res.into())
 	}
-	
+
 	async fn info(&self, repo_path: (&str, &str), issue_number: &str) -> Result<IssueInfo> {
 		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
 		let url =
@@ -48,8 +54,12 @@ impl Issue for GitHubIssue {
 		let res = request.send().await?.json::<JsonValue>().await?;
 		Ok(res.into())
 	}
-	
-	async fn list(&self, repo_path: (&str, &str), options: Option<IssueListOptions>) -> Result<Vec<IssueInfo>> {
+
+	async fn list(
+		&self,
+		repo_path: (&str, &str),
+		options: Option<ListOptions>,
+	) -> Result<Vec<IssueInfo>> {
 		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
 		let url = format!("{}/repos/{}/{}/issues", api_url, repo_path.0, repo_path.1);
 		let client = self.0.client.read().await;
@@ -83,8 +93,13 @@ impl Issue for GitHubIssue {
 		let res = request.query(&params).send().await?.json::<Vec<JsonValue>>().await?;
 		Ok(res.into_iter().map(|v| v.into()).collect())
 	}
-	
-	async fn update(&self, repo_path: (&str, &str), issue_number: &str, options: Option<UpdateIssueOptions>) -> Result<IssueInfo> {
+
+	async fn update(
+		&self,
+		repo_path: (&str, &str),
+		issue_number: &str,
+		options: Option<UpdateOptions>,
+	) -> Result<IssueInfo> {
 		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
 		if token.is_none() {
 			return Err(Error::TokenEmpty);

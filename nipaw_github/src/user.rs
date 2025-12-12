@@ -1,12 +1,12 @@
-use crate::common::{Html, JsonValue};
 use crate::GitHubClientInner;
+use crate::common::{Html, JsonValue};
 use async_trait::async_trait;
-use nipaw_core::option::ReposListOptions;
+use nipaw_core::option::repo::ListOptions;
 use nipaw_core::types::{
 	repo::RepoInfo,
 	user::{ContributionResult, UserInfo},
 };
-use nipaw_core::{Error, User, Result};
+use nipaw_core::{Error, Result, User};
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -61,10 +61,7 @@ impl User for GitHubUser {
 		Ok(info.avatar_url)
 	}
 
-	async fn contribution(
-		&self,
-		user_name: Option<&str>,
-	) -> Result<ContributionResult> {
+	async fn contribution(&self, user_name: Option<&str>) -> Result<ContributionResult> {
 		let (token, base_url) = (&self.0.config.token, &self.0.config.base_url);
 		if token.is_none() && user_name.is_none() {
 			return Err(Error::TokenEmpty);
@@ -91,7 +88,7 @@ impl User for GitHubUser {
 	async fn repo_list(
 		&self,
 		user_name: Option<&str>,
-		option: Option<ReposListOptions>,
+		option: Option<ListOptions>,
 	) -> Result<Vec<RepoInfo>> {
 		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
 		if token.is_none() && user_name.is_none() {

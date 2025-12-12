@@ -1,8 +1,7 @@
-use crate::common::JsonValue;
 use crate::GitCodeClientInner;
+use crate::common::JsonValue;
 use async_trait::async_trait;
-use nipaw_core::types::collaborator::{CollaboratorPermission, CollaboratorResult};
-use nipaw_core::types::repo::RepoInfo;
+use nipaw_core::types::repo::{CollaboratorPermission, CollaboratorResult, RepoInfo};
 use nipaw_core::{Error, Repo, Result};
 use serde_json::Value;
 use std::sync::Arc;
@@ -59,7 +58,8 @@ impl Repo for GitCodeRepo {
 		let resp = request.body(body.to_string()).send().await?;
 		let mut collaborator = resp.json::<JsonValue>().await?;
 		if let Some(obj) = collaborator.0.as_object_mut() {
-			let avatar_url = get_user_avatar_url(client.clone(), web_api_url, base_url, user_name).await?;
+			let avatar_url =
+				get_user_avatar_url(client.clone(), web_api_url, base_url, user_name).await?;
 			obj.insert("avatar_url".to_string(), Value::String(avatar_url));
 		}
 		Ok(collaborator.into())

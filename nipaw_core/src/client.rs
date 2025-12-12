@@ -7,6 +7,7 @@ pub use commit::Commit;
 mod org;
 pub use org::Org;
 mod issue;
+
 pub use issue::Issue;
 
 use crate::Result;
@@ -45,13 +46,13 @@ pub trait Client: Send + Sync {
 
 	/// 获取组织实例
 	fn org(&self) -> Box<dyn Org>;
-	
+
 	/// 获取仓库实例
 	fn repo(&self) -> Box<dyn Repo>;
 
 	/// 获取提交实例
 	fn commit(&self) -> Box<dyn Commit>;
-	
+
 	/// 获取议题实例
 	fn issue(&self) -> Box<dyn Issue>;
 }

@@ -1,4 +1,4 @@
-use crate::option::{CreateIssueOptions, IssueListOptions, UpdateIssueOptions};
+use crate::option::issue::{CreateOptions, ListOptions, UpdateOptions};
 use crate::types::issue::IssueInfo;
 use async_trait::async_trait;
 
@@ -17,7 +17,7 @@ pub trait Issue: Send + Sync {
 		repo_path: (&str, &str),
 		title: &str,
 		body: Option<&str>,
-		option: Option<CreateIssueOptions>,
+		option: Option<CreateOptions>,
 	) -> crate::Result<IssueInfo>;
 
 	/// 获取issue信息
@@ -26,11 +26,7 @@ pub trait Issue: Send + Sync {
 	/// - `repo_path` - 仓库路径，格式为 `(owner, repo)`
 	/// - `issue_number` - issue编号
 	///
-	async fn info(
-		&self,
-		repo_path: (&str, &str),
-		issue_number: &str,
-	) -> crate::Result<IssueInfo>;
+	async fn info(&self, repo_path: (&str, &str), issue_number: &str) -> crate::Result<IssueInfo>;
 
 	/// 获取仓库所有issue信息
 	///
@@ -39,7 +35,7 @@ pub trait Issue: Send + Sync {
 	async fn list(
 		&self,
 		repo_path: (&str, &str),
-		options: Option<IssueListOptions>,
+		options: Option<ListOptions>,
 	) -> crate::Result<Vec<IssueInfo>>;
 
 	/// 更新issue信息
@@ -53,6 +49,6 @@ pub trait Issue: Send + Sync {
 		&self,
 		repo_path: (&str, &str),
 		issue_number: &str,
-		options: Option<UpdateIssueOptions>,
+		options: Option<UpdateOptions>,
 	) -> crate::Result<IssueInfo>;
 }

@@ -1,7 +1,7 @@
-use crate::common::{Html, JsonValue};
 use crate::GiteeClientInner;
+use crate::common::{Html, JsonValue};
 use async_trait::async_trait;
-use nipaw_core::option::ReposListOptions;
+use nipaw_core::option::repo::ListOptions;
 use nipaw_core::types::{
 	repo::RepoInfo,
 	user::{ContributionResult, UserInfo},
@@ -81,7 +81,7 @@ impl User for GiteeUser {
 	async fn repo_list(
 		&self,
 		user_name: Option<&str>,
-		option: Option<ReposListOptions>,
+		option: Option<ListOptions>,
 	) -> Result<Vec<RepoInfo>> {
 		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
 		if token.is_none() && user_name.is_none() {

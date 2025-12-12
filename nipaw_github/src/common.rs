@@ -1,13 +1,11 @@
 use chrono::{NaiveDate, Utc, Weekday};
 use itertools::Itertools;
-use nipaw_core::types::collaborator::CollaboratorResult;
 use nipaw_core::types::issue::{IssueInfo, StateType};
-use nipaw_core::types::repo::Visibility;
 use nipaw_core::types::{
 	commit::{CommitData, CommitInfo, StatsInfo, UserInfo as CommitUserInfo},
 	issue,
 	org::OrgInfo,
-	repo::RepoInfo,
+	repo::{CollaboratorResult, RepoInfo, Visibility},
 	user::{ContributionData, ContributionResult, UserInfo},
 };
 use scraper::Selector;
@@ -67,7 +65,11 @@ impl From<JsonValue> for RepoInfo {
 			visibility: if is_public { Visibility::Public } else { Visibility::Private },
 			fork: repo_info.get("fork").and_then(|v| v.as_bool()).unwrap_or(false),
 			fork_count: repo_info.get("forks_count").and_then(|v| v.as_u64()).unwrap_or(0),
-			language: repo_info.get("language").and_then(|v| v.as_str()).filter(|s| !s.is_empty()).map(|s| s.to_string()),
+			language: repo_info
+				.get("language")
+				.and_then(|v| v.as_str())
+				.filter(|s| !s.is_empty())
+				.map(|s| s.to_string()),
 			star_count: repo_info.get("stargazers_count").and_then(|v| v.as_u64()).unwrap_or(0),
 			default_branch: repo_info
 				.get("default_branch")
@@ -205,7 +207,11 @@ impl From<JsonValue> for CommitUserInfo {
 		let user_info = value.0;
 		Self {
 			name: user_info.get("name").and_then(|v| v.as_str()).unwrap().to_string(),
-			email: user_info.get("email").and_then(|v| v.as_str()).filter(|s| !s.is_empty()).map(|s| s.to_string()),
+			email: user_info
+				.get("email")
+				.and_then(|v| v.as_str())
+				.filter(|s| !s.is_empty())
+				.map(|s| s.to_string()),
 			avatar_url: user_info.get("avatar_url").and_then(|v| v.as_str()).unwrap().to_string(),
 			date: user_info
 				.get("date")
@@ -234,8 +240,16 @@ impl From<JsonValue> for OrgInfo {
 		let org_info = value.0;
 		Self {
 			login: org_info.get("login").and_then(|v| v.as_str()).unwrap().to_string(),
-			name: org_info.get("name").and_then(|v| v.as_str()).filter(|s| !s.is_empty()).map(|s| s.to_string()),
-			email: org_info.get("email").and_then(|v| v.as_str()).filter(|s| !s.is_empty()).map(|s| s.to_string()),
+			name: org_info
+				.get("name")
+				.and_then(|v| v.as_str())
+				.filter(|s| !s.is_empty())
+				.map(|s| s.to_string()),
+			email: org_info
+				.get("email")
+				.and_then(|v| v.as_str())
+				.filter(|s| !s.is_empty())
+				.map(|s| s.to_string()),
 			avatar_url: org_info.get("avatar_url").and_then(|v| v.as_str()).unwrap().to_string(),
 			description: org_info
 				.get("description")
@@ -280,7 +294,11 @@ impl From<JsonValue> for IssueInfo {
 			number: issue_info.get("number").and_then(|v| v.as_u64()).unwrap().to_string(),
 			state: if is_open { StateType::Opened } else { StateType::Closed },
 			title: issue_info.get("title").and_then(|v| v.as_str()).unwrap().to_string(),
-			body: issue_info.get("body").and_then(|v| v.as_str()).filter(|s| !s.is_empty()).map(|s| s.to_string()),
+			body: issue_info
+				.get("body")
+				.and_then(|v| v.as_str())
+				.filter(|s| !s.is_empty())
+				.map(|s| s.to_string()),
 			labels: JsonValue(labels_info).into(),
 			user: JsonValue(user_info).into(),
 			created_at: issue_info
@@ -311,7 +329,11 @@ impl From<JsonValue> for issue::UserInfo {
 		Self {
 			name: user_info.get("login").and_then(|v| v.as_str()).unwrap().to_string(),
 			avatar_url: user_info.get("avatar_url").and_then(|v| v.as_str()).unwrap().to_string(),
-			email: user_info.get("email").and_then(|v| v.as_str()).filter(|s| !s.is_empty()).map(|s| s.to_string()),
+			email: user_info
+				.get("email")
+				.and_then(|v| v.as_str())
+				.filter(|s| !s.is_empty())
+				.map(|s| s.to_string()),
 		}
 	}
 }

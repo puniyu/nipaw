@@ -1,7 +1,7 @@
-use crate::common::JsonValue;
 use crate::GiteeClientInner;
+use crate::common::JsonValue;
 use async_trait::async_trait;
-use nipaw_core::option::CommitListOptions;
+use nipaw_core::option::commit::ListOptions;
 use nipaw_core::types::commit::CommitInfo;
 use nipaw_core::{Commit, Result};
 use serde_json::Value;
@@ -67,7 +67,7 @@ impl Commit for GiteeCommit {
 	async fn list(
 		&self,
 		repo_path: (&str, &str),
-		option: Option<CommitListOptions>,
+		option: Option<ListOptions>,
 	) -> Result<Vec<CommitInfo>> {
 		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
 		let url = format!("{}/repos/{}/{}/commits", api_url, repo_path.0, repo_path.1);

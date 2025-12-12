@@ -2,15 +2,14 @@ use crate::{
 	common::RT_RUNTIME,
 	error,
 	option::{
-		CommitListOptions, CreateIssueOptions, IssueListOptions, OrgRepoListOptions,
-		ReposListOptions, UpdateIssueOptions,
+		CommitListOptions, CreateIssueOptions, IssueListOptions, RepoListOptions,
+		UpdateIssueOptions,
 	},
 	types::{
-		collaborator::{CollaboratorPermission, CollaboratorResult},
 		commit::CommitInfo,
 		issue::IssueInfo,
 		org::OrgInfo,
-		repo::RepoInfo,
+		repo::{CollaboratorPermission, CollaboratorResult, RepoInfo},
 		user::{ContributionResult, UserInfo},
 	},
 };
@@ -81,7 +80,7 @@ macro_rules! impl_client {
 				pub async fn repo_list(
 					&self,
 					user_name: Option<String>,
-					option: Option<ReposListOptions>,
+					option: Option<RepoListOptions>,
 				) -> Result<Vec<RepoInfo>> {
 					let client = [<create_client_ $client_type:lower>]().await;
 					let repo_infos = client.user().repo_list(user_name.as_deref(), option.map(|o| o.into())).await?;
@@ -127,7 +126,7 @@ macro_rules! impl_client {
 				pub async fn repo_list(
 					&self,
 					org_name: String,
-					option: Option<OrgRepoListOptions>,
+					option: Option<RepoListOptions>,
 				) -> Result<Vec<RepoInfo>> {
 					let client = [<create_client_ $client_type:lower>]().await;
 					let repo_infos = client.org().repo_list(org_name.as_str(), option.map(|o| o.into())).await?;

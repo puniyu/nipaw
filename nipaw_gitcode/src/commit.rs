@@ -1,7 +1,7 @@
-use crate::common::JsonValue;
 use crate::GitCodeClientInner;
+use crate::common::JsonValue;
 use async_trait::async_trait;
-use nipaw_core::option::CommitListOptions;
+use nipaw_core::option::commit::ListOptions;
 use nipaw_core::types::commit::CommitInfo;
 use nipaw_core::{Commit, Result};
 use serde_json::Value;
@@ -63,7 +63,8 @@ impl Commit for GitCodeCommit {
 			.and_then(|commit_obj| commit_obj.get_mut("author"))
 			.and_then(|author| author.as_object_mut())
 		{
-			let avatar_url = get_user_avatar_url(client.clone(), web_api_url, base_url, &author_name).await?;
+			let avatar_url =
+				get_user_avatar_url(client.clone(), web_api_url, base_url, &author_name).await?;
 			author.insert("avatar_url".to_string(), Value::String(avatar_url));
 		}
 		if let Some(committer) = commit_info
@@ -73,7 +74,8 @@ impl Commit for GitCodeCommit {
 			.and_then(|commit_obj| commit_obj.get_mut("committer"))
 			.and_then(|committer| committer.as_object_mut())
 		{
-			let avatar_url = get_user_avatar_url(client.clone(), web_api_url, base_url, &committer_name).await?;
+			let avatar_url =
+				get_user_avatar_url(client.clone(), web_api_url, base_url, &committer_name).await?;
 			committer.insert("avatar_url".to_string(), Value::String(avatar_url));
 		}
 		Ok(commit_info.into())
@@ -82,7 +84,7 @@ impl Commit for GitCodeCommit {
 	async fn list(
 		&self,
 		repo_path: (&str, &str),
-		option: Option<CommitListOptions>,
+		option: Option<ListOptions>,
 	) -> Result<Vec<CommitInfo>> {
 		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
 		let url = format!("{}/repos/{}/{}/commits", api_url, repo_path.0, repo_path.1);

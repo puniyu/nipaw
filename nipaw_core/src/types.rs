@@ -1,4 +1,3 @@
-pub mod collaborator;
 pub mod commit;
 pub mod issue;
 pub mod org;

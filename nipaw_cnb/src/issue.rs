@@ -1,8 +1,8 @@
 use crate::common::JsonValue;
-use crate::{get_user_info, CnbClientInner};
+use crate::{CnbClientInner, get_user_info};
 use async_trait::async_trait;
 use futures::future::join_all;
-use nipaw_core::option::{CreateIssueOptions, IssueListOptions, UpdateIssueOptions};
+use nipaw_core::option::issue::{CreateOptions, ListOptions, UpdateOptions};
 use nipaw_core::types::issue::{IssueInfo, StateType};
 use nipaw_core::{Error, Issue, Result};
 use std::collections::HashMap;
@@ -17,7 +17,7 @@ impl Issue for CnbIssue {
 		repo_path: (&str, &str),
 		title: &str,
 		body: Option<&str>,
-		option: Option<CreateIssueOptions>,
+		option: Option<CreateOptions>,
 	) -> Result<IssueInfo> {
 		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
 		if token.is_none() {
@@ -77,7 +77,7 @@ impl Issue for CnbIssue {
 	async fn list(
 		&self,
 		repo_path: (&str, &str),
-		options: Option<IssueListOptions>,
+		options: Option<ListOptions>,
 	) -> Result<Vec<IssueInfo>> {
 		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
 		if token.is_none() {
@@ -145,7 +145,7 @@ impl Issue for CnbIssue {
 		&self,
 		repo_path: (&str, &str),
 		issue_number: &str,
-		options: Option<UpdateIssueOptions>,
+		options: Option<UpdateOptions>,
 	) -> Result<IssueInfo> {
 		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
 		if token.is_none() {

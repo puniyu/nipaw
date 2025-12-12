@@ -1,5 +1,4 @@
-use crate::types::collaborator::{CollaboratorPermission, CollaboratorResult};
-use crate::types::repo::RepoInfo;
+use crate::types::repo::{CollaboratorPermission, CollaboratorResult, RepoInfo};
 use async_trait::async_trait;
 
 #[async_trait]

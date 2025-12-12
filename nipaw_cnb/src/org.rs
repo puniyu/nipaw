@@ -1,7 +1,7 @@
-use crate::common::JsonValue;
 use crate::CnbClientInner;
+use crate::common::JsonValue;
 use async_trait::async_trait;
-use nipaw_core::option::OrgRepoListOptions;
+use nipaw_core::option::repo::ListOptions;
 use nipaw_core::types::{org::OrgInfo, repo::RepoInfo};
 use nipaw_core::{Org, Result};
 use serde_json::Value;
@@ -38,7 +38,7 @@ impl Org for CnbOrg {
 	async fn repo_list(
 		&self,
 		org_name: &str,
-		options: Option<OrgRepoListOptions>,
+		options: Option<ListOptions>,
 	) -> Result<Vec<RepoInfo>> {
 		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
 		let url = format!("{}/{}/-/repos", api_url, org_name);

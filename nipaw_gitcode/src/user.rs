@@ -1,7 +1,7 @@
-use crate::common::JsonValue;
 use crate::GitCodeClientInner;
+use crate::common::JsonValue;
 use async_trait::async_trait;
-use nipaw_core::option::ReposListOptions;
+use nipaw_core::option::repo::ListOptions;
 use nipaw_core::types::{
 	repo::RepoInfo,
 	user::{ContributionResult, UserInfo},
@@ -38,7 +38,8 @@ impl User for GitCodeUser {
 			} else {
 				user.get("username").and_then(|v| v.as_str()).unwrap().to_string()
 			};
-			let repo_count = crate::get_user_repo_count(client.clone(), &self.0.config, &user_name).await?;
+			let repo_count =
+				crate::get_user_repo_count(client.clone(), &self.0.config, &user_name).await?;
 			user.insert("repo_count".to_string(), Value::Number(repo_count.into()));
 		}
 		Ok(user_info.into())
@@ -51,9 +52,11 @@ impl User for GitCodeUser {
 			return Err(Error::TokenEmpty);
 		}
 		if let Some(user_name) = user_name {
-			let url = format!("{}/uc/api/v1/user/setting/profile?username={}", web_api_url, user_name);
+			let url =
+				format!("{}/uc/api/v1/user/setting/profile?username={}", web_api_url, user_name);
 			let client = self.0.client.read().await;
-			let res = client.get(url).header("Referer", base_url).send().await?.json::<Value>().await?;
+			let res =
+				client.get(url).header("Referer", base_url).send().await?.json::<Value>().await?;
 			let avatar_url = res.get("avatar").and_then(|v| v.as_str()).unwrap().to_string();
 			return Ok(avatar_url);
 		}
@@ -85,7 +88,7 @@ impl User for GitCodeUser {
 	async fn repo_list(
 		&self,
 		user_name: Option<&str>,
-		option: Option<ReposListOptions>,
+		option: Option<ListOptions>,
 	) -> Result<Vec<RepoInfo>> {
 		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
 		if token.is_none() && user_name.is_none() {
