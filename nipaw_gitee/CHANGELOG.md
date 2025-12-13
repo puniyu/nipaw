@@ -1,5 +1,24 @@
 # 变更日志
 
+## [1.9.0](https://github.com/puniyu/nipaw/compare/gitee-v0.12.1...gitee-v1.9.0) (2025-12-13)
+
+
+### ✨ 新功能
+
+* **core:** 引入 Release 模块并重构 Commit 相关类型 ([6598fc4](https://github.com/puniyu/nipaw/commit/6598fc42493098978046d0c7b784e8bb1529355d))
+
+
+### ♻️ 代码重构
+
+* **core:** 重构选项模块结构 ([17fb9b1](https://github.com/puniyu/nipaw/commit/17fb9b1cfed7420ff8c9cf285373999f2a678cc4))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * nipaw_core bumped from 0.12.2 to 1.9.0
+
 ## [0.12.1](https://github.com/puniyu/nipaw/compare/gitee-v0.12.0...gitee-v0.12.1) (2025-12-11)
 
 

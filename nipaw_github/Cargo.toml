@@ -1,6 +1,6 @@
 [package]
 name = "nipaw_github"
-version = "0.12.2"
+version = "1.9.0"
 description = "Github provider for nipaw_core"
 authors.workspace = true
 license.workspace = true
@@ -21,7 +21,7 @@ serde.workspace = true
 serde_json.workspace = true
 chrono.workspace = true
 
-nipaw_core = { path = "../nipaw_core", version = "0.12.2" }
+nipaw_core = { path = "../nipaw_core", version = "1.9.0" }
 
 scraper = "=0.25.0"
 
