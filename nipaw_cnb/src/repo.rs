@@ -1,7 +1,7 @@
 use crate::common::JsonValue;
 use crate::{CnbClientInner, get_repo_default_branch};
 use async_trait::async_trait;
-use nipaw_core::types::repo::{CollaboratorPermission, CollaboratorResult, RepoInfo};
+use nipaw_core::types::repo::{CollaboratorPermission, CollaboratorResult, RepoInfo, RepoPath};
 use nipaw_core::{Error, Repo, Result};
 use reqwest::header;
 use serde_json::Value;
@@ -11,8 +11,11 @@ pub struct CnbRepo(pub(crate) Arc<CnbClientInner>);
 
 #[async_trait]
 impl Repo for CnbRepo {
-	async fn info(&self, repo_path: (&str, &str)) -> Result<RepoInfo> {
+	async fn info(&self, repo_path: RepoPath<'_>) -> Result<RepoInfo> {
 		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
+		if token.is_none() {
+			return Err(Error::TokenEmpty);
+		}
 		let url = format!("{}/repos/{}/{}", api_url, repo_path.0, repo_path.1);
 		let client = self.0.client.read().await;
 		let mut request = client.get(url);
@@ -34,7 +37,7 @@ impl Repo for CnbRepo {
 
 	async fn add_repo_collaborator(
 		&self,
-		repo_path: (&str, &str),
+		repo_path: RepoPath<'_>,
 		user_name: &str,
 		permission: Option<CollaboratorPermission>,
 	) -> Result<CollaboratorResult> {

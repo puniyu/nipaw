@@ -3,6 +3,7 @@ use crate::common::JsonValue;
 use async_trait::async_trait;
 use nipaw_core::option::issue::{CreateOptions, ListOptions, UpdateOptions};
 use nipaw_core::types::issue::{IssueInfo, StateType};
+use nipaw_core::types::repo::RepoPath;
 use nipaw_core::{Error, Issue, Result};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -13,7 +14,7 @@ pub struct GitCodeIssue(pub(crate) Arc<GitCodeClientInner>);
 impl Issue for GitCodeIssue {
 	async fn create(
 		&self,
-		repo_path: (&str, &str),
+		repo_path: RepoPath<'_>,
 		title: &str,
 		body: Option<&str>,
 		option: Option<CreateOptions>,
@@ -43,8 +44,11 @@ impl Issue for GitCodeIssue {
 		Ok(res.into())
 	}
 
-	async fn info(&self, repo_path: (&str, &str), issue_number: &str) -> Result<IssueInfo> {
+	async fn info(&self, repo_path: RepoPath<'_>, issue_number: &str) -> Result<IssueInfo> {
 		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
+		if token.is_none() {
+			return Err(Error::TokenEmpty);
+		}
 		let url =
 			format!("{}/repos/{}/{}/issues/{}", api_url, repo_path.0, repo_path.1, issue_number);
 		let client = self.0.client.read().await;
@@ -58,10 +62,13 @@ impl Issue for GitCodeIssue {
 
 	async fn list(
 		&self,
-		repo_path: (&str, &str),
+		repo_path: RepoPath<'_>,
 		options: Option<ListOptions>,
 	) -> Result<Vec<IssueInfo>> {
 		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
+		if token.is_none() {
+			return Err(Error::TokenEmpty);
+		}
 		let url = format!("{}/repos/{}/{}/issues", api_url, repo_path.0, repo_path.1);
 		let client = self.0.client.read().await;
 		let mut request = client.get(url);
@@ -97,7 +104,7 @@ impl Issue for GitCodeIssue {
 
 	async fn update(
 		&self,
-		repo_path: (&str, &str),
+		repo_path: RepoPath<'_>,
 		issue_number: &str,
 		options: Option<UpdateOptions>,
 	) -> Result<IssueInfo> {

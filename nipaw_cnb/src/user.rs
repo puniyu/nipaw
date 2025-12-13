@@ -19,7 +19,7 @@ impl User for CnbUser {
 	async fn info(&self, user_name: Option<&str>) -> Result<UserInfo> {
 		let (token, api_url, base_url) =
 			(&self.0.config.token, &self.0.config.api_url, &self.0.config.base_url);
-		if token.is_none() && user_name.is_none() {
+		if token.is_none() {
 			return Err(Error::TokenEmpty);
 		}
 		let client = self.0.client.read().await;
@@ -60,7 +60,7 @@ impl User for CnbUser {
 
 	async fn contribution(&self, user_name: Option<&str>) -> Result<ContributionResult> {
 		let (token, base_url) = (&self.0.config.token, &self.0.config.base_url);
-		if token.is_none() && user_name.is_none() {
+		if token.is_none() {
 			return Err(Error::TokenEmpty);
 		}
 		let user_name = if let Some(user_name) = user_name {
@@ -82,7 +82,7 @@ impl User for CnbUser {
 		option: Option<ListOptions>,
 	) -> Result<Vec<RepoInfo>> {
 		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
-		if token.is_none() && user_name.is_none() {
+		if token.is_none() {
 			return Err(Error::TokenEmpty);
 		}
 		let url = if let Some(name) = user_name {

@@ -3,7 +3,7 @@ use crate::common::JsonValue;
 use async_trait::async_trait;
 use nipaw_core::option::repo::ListOptions;
 use nipaw_core::types::{org::OrgInfo, repo::RepoInfo};
-use nipaw_core::{Org, Result};
+use nipaw_core::{Error, Org, Result};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -15,6 +15,9 @@ impl Org for CnbOrg {
 	async fn info(&self, org_name: &str) -> Result<OrgInfo> {
 		let (token, api_url, base_url) =
 			(&self.0.config.token, &self.0.config.api_url, &self.0.config.base_url);
+		if token.is_none() {
+			return Err(Error::TokenEmpty);
+		}
 		let url = format!("{}/{}", api_url, org_name);
 		let client = self.0.client.read().await;
 		let mut request = client.get(url);
@@ -41,6 +44,9 @@ impl Org for CnbOrg {
 		options: Option<ListOptions>,
 	) -> Result<Vec<RepoInfo>> {
 		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
+		if token.is_none() {
+			return Err(Error::TokenEmpty);
+		}
 		let url = format!("{}/{}/-/repos", api_url, org_name);
 		let client = self.0.client.read().await;
 		let mut request = client.get(url);

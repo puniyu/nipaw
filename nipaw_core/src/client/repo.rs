@@ -1,4 +1,4 @@
-use crate::types::repo::{CollaboratorPermission, CollaboratorResult, RepoInfo};
+use crate::types::repo::{CollaboratorPermission, CollaboratorResult, RepoInfo, RepoPath};
 use async_trait::async_trait;
 
 #[async_trait]
@@ -9,7 +9,7 @@ pub trait Repo: Send + Sync {
 	///
 	/// * `repo_path` - 仓库路径，格式为 `(owner, repo)`
 	///
-	async fn info(&self, repo_path: (&str, &str)) -> crate::Result<RepoInfo>;
+	async fn info(&self, repo_path: RepoPath<'_>) -> crate::Result<RepoInfo>;
 
 	/// 添加仓库协作者， 如果仓库属于某个组织下的则为外部协作者
 	///
@@ -21,7 +21,7 @@ pub trait Repo: Send + Sync {
 	///
 	async fn add_repo_collaborator(
 		&self,
-		repo_path: (&str, &str),
+		repo_path: RepoPath<'_>,
 		user_name: &str,
 		permission: Option<CollaboratorPermission>,
 	) -> crate::Result<CollaboratorResult>;

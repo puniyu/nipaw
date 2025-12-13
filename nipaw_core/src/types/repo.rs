@@ -60,3 +60,5 @@ pub enum CollaboratorPermission {
 	/// 拉取权限
 	Pull,
 }
+
+pub type RepoPath<'r> = (&'r str, &'r str);

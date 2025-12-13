@@ -4,6 +4,8 @@ use thiserror::Error;
 pub enum Error {
 	#[error("set token is empty")]
 	TokenEmpty,
+	#[error("invalid param: {0}")]
+	InvalidParam(String),
 	#[error("request error: {0}")]
 	RequestError(#[from] reqwest::Error),
 	#[error("middleware error: {0}")]

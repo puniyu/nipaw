@@ -3,10 +3,9 @@ mod common;
 mod issue;
 mod middleware;
 mod org;
+mod release;
 mod repo;
 mod user;
-
-pub use nipaw_core::{Client, Commit, Error, Issue, Org, Repo, Result, User};
 
 use crate::{
 	commit::CnbCommit,
@@ -14,11 +13,13 @@ use crate::{
 	issue::CnbIssue,
 	middleware::{HeaderMiddleware, ResponseMiddleware},
 	org::CnbOrg,
+	release::CnbRelease,
 	repo::CnbRepo,
 	user::CnbUser,
 };
 use async_trait::async_trait;
 use nipaw_core::types::user::UserInfo;
+pub use nipaw_core::{Client, Commit, Error, Issue, Org, Release, Repo, Result, User};
 use reqwest::Proxy;
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use serde_json::Value;
@@ -119,6 +120,10 @@ impl Client for CnbClient {
 
 	fn issue(&self) -> Box<dyn Issue> {
 		Box::new(CnbIssue(self.inner.clone()))
+	}
+
+	fn release(&self) -> Box<dyn Release> {
+		Box::new(CnbRelease(self.inner.clone()))
 	}
 }
 

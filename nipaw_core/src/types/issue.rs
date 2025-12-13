@@ -37,7 +37,7 @@ pub enum StateType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UserInfo {
 	/// 用户名
-	pub name: String,
+	pub login: String,
 	/// 邮箱
 	pub email: Option<String>,
 	/// 头像URL

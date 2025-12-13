@@ -2,23 +2,57 @@ use crate::GitCodeClientInner;
 use crate::common::JsonValue;
 use async_trait::async_trait;
 use nipaw_core::option::commit::ListOptions;
-use nipaw_core::types::commit::CommitInfo;
-use nipaw_core::{Commit, Result};
+use nipaw_core::types::commit::{CommitInfo, FileInfo};
+use nipaw_core::types::repo::RepoPath;
+use nipaw_core::{Commit, Error, Result};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::sync::Arc;
 
 pub struct GitCodeCommit(pub(crate) Arc<GitCodeClientInner>);
 
+impl GitCodeCommit {
+	pub(crate) async fn get_file_info(
+		&self,
+		repo_path: RepoPath<'_>,
+		base: &str,
+		head: &str,
+	) -> Result<Vec<FileInfo>> {
+		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
+		let token = token.as_ref().ok_or(Error::TokenEmpty)?;
+		let client = self.0.client.read().await;
+		let url = format!(
+			"{}/repos/{}/{}/compare/{}...{}",
+			api_url, repo_path.0, repo_path.1, base, head
+		);
+		let resp = client.get(&url).query(&[("straight", true)]).bearer_auth(token).send().await?;
+		let json = resp.json::<JsonValue>().await?;
+		println!("res: {:#?}", json);
+		let files = json
+			.0
+			.get("files")
+			.and_then(|f| f.as_array())
+			.map(|arr| arr.iter().map(|v| JsonValue(v.clone()).into()).collect())
+			.unwrap_or_default();
+		Ok(files)
+	}
+	pub(crate) async fn get_user_avatar_url(&self, user_name: &str) -> Result<String> {
+		let (web_api_url, base_url) = (&self.0.config.web_api_url, &self.0.config.base_url);
+		let client = self.0.client.read().await;
+		let url = format!("{}/uc/api/v1/user/setting/profile?username={}", web_api_url, user_name);
+		let res = client.get(url).header("Referer", base_url).send().await?.json::<Value>().await?;
+		let default_avatar_url = "https://cdn-static.gitcode.com/doc/avatar-5.png";
+		let avatar_url = res.get("avatar").and_then(|v| v.as_str()).unwrap_or(default_avatar_url);
+		Ok(avatar_url.to_string())
+	}
+}
 #[async_trait]
 impl Commit for GitCodeCommit {
-	async fn info(&self, repo_path: (&str, &str), sha: Option<&str>) -> Result<CommitInfo> {
-		let (token, api_url, web_api_url, base_url) = (
-			&self.0.config.token,
-			&self.0.config.api_url,
-			&self.0.config.web_api_url,
-			&self.0.config.base_url,
-		);
+	async fn info(&self, repo_path: RepoPath<'_>, sha: Option<&str>) -> Result<CommitInfo> {
+		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
+		if token.is_none() {
+			return Err(Error::TokenEmpty);
+		}
 		let url = format!(
 			"{}/repos/{}/{}/commits/{}",
 			api_url,
@@ -63,10 +97,10 @@ impl Commit for GitCodeCommit {
 			.and_then(|commit_obj| commit_obj.get_mut("author"))
 			.and_then(|author| author.as_object_mut())
 		{
-			let avatar_url =
-				get_user_avatar_url(client.clone(), web_api_url, base_url, &author_name).await?;
+			let avatar_url = self.get_user_avatar_url(&author_name).await?;
 			author.insert("avatar_url".to_string(), Value::String(avatar_url));
 		}
+
 		if let Some(committer) = commit_info
 			.0
 			.get_mut("commit")
@@ -74,19 +108,41 @@ impl Commit for GitCodeCommit {
 			.and_then(|commit_obj| commit_obj.get_mut("committer"))
 			.and_then(|committer| committer.as_object_mut())
 		{
-			let avatar_url =
-				get_user_avatar_url(client.clone(), web_api_url, base_url, &committer_name).await?;
+			let avatar_url = self.get_user_avatar_url(&committer_name).await?;
 			committer.insert("avatar_url".to_string(), Value::String(avatar_url));
-		}
+		};
+
+		let commit_sha =
+			commit_info.0.get("sha").and_then(|v| v.as_str()).unwrap_or(sha.unwrap_or("HEAD"));
+
+		let parent_sha = commit_info
+			.0
+			.get("parents")
+			.and_then(|p| p.as_array())
+			.and_then(|arr| arr.first())
+			.and_then(|p| p.get("sha"))
+			.and_then(|v| v.as_str())
+			.unwrap();
+
+		let files = self.get_file_info(repo_path, parent_sha, commit_sha).await?;
+
+		commit_info
+			.0
+			.as_object_mut()
+			.unwrap()
+			.insert("files".to_string(), serde_json::to_value(&files).unwrap());
 		Ok(commit_info.into())
 	}
 
 	async fn list(
 		&self,
-		repo_path: (&str, &str),
+		repo_path: RepoPath<'_>,
 		option: Option<ListOptions>,
 	) -> Result<Vec<CommitInfo>> {
 		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
+		if token.is_none() {
+			return Err(Error::TokenEmpty);
+		}
 		let url = format!("{}/repos/{}/{}/commits", api_url, repo_path.0, repo_path.1);
 		let client = self.0.client.read().await;
 		let mut request = client.get(url);
@@ -116,16 +172,4 @@ impl Commit for GitCodeCommit {
 		let res = request.query(&params).send().await?.json::<Vec<JsonValue>>().await?;
 		Ok(res.into_iter().map(|v| v.into()).collect())
 	}
-}
-
-async fn get_user_avatar_url(
-	client: Arc<reqwest_middleware::ClientWithMiddleware>,
-	web_api_url: &str,
-	base_url: &str,
-	user_name: &str,
-) -> Result<String> {
-	let url = format!("{}/uc/api/v1/user/setting/profile?username={}", web_api_url, user_name);
-	let res = client.get(url).header("Referer", base_url).send().await?.json::<Value>().await?;
-	let avatar_url = res.get("avatar").and_then(|v| v.as_str()).unwrap().to_string();
-	Ok(avatar_url)
 }

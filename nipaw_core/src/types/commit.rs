@@ -9,8 +9,8 @@ pub struct CommitInfo {
 	pub commit: CommitData,
 	/// 提交统计信息
 	pub stats: StatsInfo,
-	/// 修改的文件数
-	pub change_files: u32,
+	/// 文件差异状态
+	pub files: Vec<FileInfo>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -43,4 +43,36 @@ pub struct StatsInfo {
 	pub additions: u64,
 	/// 删除的行数
 	pub deletions: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FileInfo {
+	/// 文件名
+	pub file_name: String,
+	/// 文件状态
+	pub status: FileStatus,
+	/// 新增行数
+	pub additions: u64,
+	/// 删除行数
+	pub deletions: u64,
+	/// 修改行数
+	pub changes: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum FileStatus {
+	/// 新增文件
+	Added,
+	/// 修改文件
+	Modified,
+	/// 删除文件
+	Deleted,
+	/// 重命名文件
+	Renamed,
+	/// 复制文件
+	Copied,
+	/// 文件已变更
+	Changed,
+	/// 文件未变更
+	UnChanged,
 }

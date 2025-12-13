@@ -4,6 +4,7 @@ use async_trait::async_trait;
 use futures::future::join_all;
 use nipaw_core::option::issue::{CreateOptions, ListOptions, UpdateOptions};
 use nipaw_core::types::issue::{IssueInfo, StateType};
+use nipaw_core::types::repo::RepoPath;
 use nipaw_core::{Error, Issue, Result};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -14,7 +15,7 @@ pub struct CnbIssue(pub(crate) Arc<CnbClientInner>);
 impl Issue for CnbIssue {
 	async fn create(
 		&self,
-		repo_path: (&str, &str),
+		repo_path: RepoPath<'_>,
 		title: &str,
 		body: Option<&str>,
 		option: Option<CreateOptions>,
@@ -53,7 +54,7 @@ impl Issue for CnbIssue {
 		Ok(res.into())
 	}
 
-	async fn info(&self, repo_path: (&str, &str), issue_number: &str) -> Result<IssueInfo> {
+	async fn info(&self, repo_path: RepoPath<'_>, issue_number: &str) -> Result<IssueInfo> {
 		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
 		if token.is_none() {
 			return Err(Error::TokenEmpty);
@@ -76,7 +77,7 @@ impl Issue for CnbIssue {
 
 	async fn list(
 		&self,
-		repo_path: (&str, &str),
+		repo_path: RepoPath<'_>,
 		options: Option<ListOptions>,
 	) -> Result<Vec<IssueInfo>> {
 		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
@@ -143,7 +144,7 @@ impl Issue for CnbIssue {
 
 	async fn update(
 		&self,
-		repo_path: (&str, &str),
+		repo_path: RepoPath<'_>,
 		issue_number: &str,
 		options: Option<UpdateOptions>,
 	) -> Result<IssueInfo> {

@@ -1,7 +1,7 @@
 use crate::GiteeClientInner;
 use crate::common::JsonValue;
 use async_trait::async_trait;
-use nipaw_core::types::repo::{CollaboratorPermission, CollaboratorResult, RepoInfo};
+use nipaw_core::types::repo::{CollaboratorPermission, CollaboratorResult, RepoInfo, RepoPath};
 use nipaw_core::{Error, Repo, Result};
 use reqwest::header;
 use std::sync::Arc;
@@ -10,7 +10,7 @@ pub struct GiteeRepo(pub(crate) Arc<GiteeClientInner>);
 
 #[async_trait]
 impl Repo for GiteeRepo {
-	async fn info(&self, repo_path: (&str, &str)) -> Result<RepoInfo> {
+	async fn info(&self, repo_path: RepoPath<'_>) -> Result<RepoInfo> {
 		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
 		let url = format!("{}/repos/{}/{}", api_url, repo_path.0, repo_path.1);
 		let client = self.0.client.read().await;
@@ -25,7 +25,7 @@ impl Repo for GiteeRepo {
 
 	async fn add_repo_collaborator(
 		&self,
-		repo_path: (&str, &str),
+		repo_path: RepoPath<'_>,
 		user_name: &str,
 		permission: Option<CollaboratorPermission>,
 	) -> Result<CollaboratorResult> {

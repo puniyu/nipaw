@@ -3,16 +3,18 @@ mod common;
 mod issue;
 mod middleware;
 mod org;
+mod release;
 mod repo;
 mod user;
 
-pub use nipaw_core::{Client, Commit, Error, Issue, Org, Repo, Result, User};
+pub use nipaw_core::{Client, Commit, Error, Issue, Org, Release, Repo, Result, User};
 
 use crate::{
 	commit::GiteeCommit,
 	issue::GiteeIssue,
 	middleware::{HeaderMiddleware, ResponseMiddleware},
 	org::GiteeOrg,
+	release::GiteeRelease,
 	repo::GiteeRepo,
 	user::GiteeUser,
 };
@@ -116,5 +118,9 @@ impl Client for GiteeClient {
 
 	fn issue(&self) -> Box<dyn Issue> {
 		Box::new(GiteeIssue(self.inner.clone()))
+	}
+
+	fn release(&self) -> Box<dyn Release> {
+		Box::new(GiteeRelease(self.inner.clone()))
 	}
 }

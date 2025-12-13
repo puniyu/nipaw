@@ -65,7 +65,7 @@ pub struct IssueUserInfo {
 
 impl From<nipaw_core::types::issue::UserInfo> for IssueUserInfo {
 	fn from(value: nipaw_core::types::issue::UserInfo) -> Self {
-		Self { name: value.name, email: value.email, avatar_url: value.avatar_url }
+		Self { name: value.login, email: value.email, avatar_url: value.avatar_url }
 	}
 }
 

@@ -3,12 +3,13 @@ use crate::{
 	error,
 	option::{
 		CommitListOptions, CreateIssueOptions, IssueListOptions, RepoListOptions,
-		UpdateIssueOptions,
+		UpdateIssueOptions, UpdateReleaseOptions,
 	},
 	types::{
 		commit::CommitInfo,
 		issue::IssueInfo,
 		org::OrgInfo,
+		release::ReleaseInfo,
 		repo::{CollaboratorPermission, CollaboratorResult, RepoInfo},
 		user::{ContributionResult, UserInfo},
 	},
@@ -224,6 +225,102 @@ macro_rules! impl_client {
 				}
 			}
 
+			// Release 子模块
+			#[derive(Debug, Default)]
+			#[napi(constructor)]
+			pub struct [<$client_type Release>];
+
+			#[napi]
+			impl [<$client_type Release>] {
+				/// 创建一个Release
+				///
+				/// ## 参数
+				/// - `owner` 仓库所有者
+				/// - `repo` 仓库名称
+				/// - `tag_name` 标签名称
+				/// - `name` Release名称, 可选
+				/// - `body` Release内容, 可选
+				/// - `target_commitish` 目标提交SHA或分支, 可选
+				#[napi]
+				pub async fn create(
+					&self,
+					owner: String,
+					repo: String,
+					tag_name: String,
+					name: Option<String>,
+					body: Option<String>,
+					target_commitish: Option<String>,
+				) -> Result<ReleaseInfo> {
+					let client = [<create_client_ $client_type:lower>]().await;
+					let repo_path = (owner.as_str(), repo.as_str());
+					let release_info = client.release().create(
+						repo_path,
+						tag_name.as_str(),
+						name.as_deref(),
+						body.as_deref(),
+						target_commitish.as_deref(),
+					).await?;
+					Ok(release_info.into())
+				}
+
+				/// 获取Release信息
+				///
+				/// ## 参数
+				/// - `owner` 仓库所有者
+				/// - `repo` 仓库名称
+				/// - `tag_name` 标签名称, 可选, 为空时获取最新Release
+				#[napi]
+				pub async fn info(
+					&self,
+					owner: String,
+					repo: String,
+					tag_name: Option<String>,
+				) -> Result<ReleaseInfo> {
+					let client = [<create_client_ $client_type:lower>]().await;
+					let repo_path = (owner.as_str(), repo.as_str());
+					let release_info = client.release().info(repo_path, tag_name.as_deref()).await?;
+					Ok(release_info.into())
+				}
+
+				/// 获取Release列表
+				///
+				/// ## 参数
+				/// - `owner` 仓库所有者
+				/// - `repo` 仓库名称
+				#[napi]
+				pub async fn list(
+					&self,
+					owner: String,
+					repo: String,
+				) -> Result<Vec<ReleaseInfo>> {
+					let client = [<create_client_ $client_type:lower>]().await;
+					let repo_path = (owner.as_str(), repo.as_str());
+					let release_infos = client.release().list(repo_path).await?;
+					Ok(release_infos.into_iter().map(|v| v.into()).collect())
+				}
+
+				/// 更新Release
+				///
+				/// ## 参数
+				/// - `owner` 仓库所有者
+				/// - `repo` 仓库名称
+				/// - `tag_name` 标签名称
+				/// - `option` 更新参数
+				#[napi]
+				pub async fn update(
+					&self,
+					owner: String,
+					repo: String,
+					tag_name: String,
+					option: UpdateReleaseOptions,
+				) -> Result<ReleaseInfo> {
+					let client = [<create_client_ $client_type:lower>]().await;
+					let repo_path = (owner.as_str(), repo.as_str());
+					let release_info = client.release().update(repo_path, tag_name.as_str(), option.into()).await?;
+					Ok(release_info.into())
+				}
+			}
+
 			// Issue 子模块
 			#[derive(Debug, Default)]
 			#[napi(constructor)]
@@ -363,6 +460,12 @@ macro_rules! impl_client {
 				#[napi]
 				pub fn issue(&self) -> [<$client_type Issue>] {
 					[<$client_type Issue>]
+				}
+
+				/// 获取Release操作模块
+				#[napi]
+				pub fn release(&self) -> [<$client_type Release>] {
+					[<$client_type Release>]
 				}
 			}
 		}

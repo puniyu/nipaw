@@ -3,10 +3,9 @@ mod common;
 mod issue;
 mod middleware;
 mod org;
+mod release;
 mod repo;
 mod user;
-
-pub use nipaw_core::{Client, Commit, Error, Issue, Org, Repo, Result, User};
 
 use crate::{
 	commit::GitCodeCommit,
@@ -14,10 +13,12 @@ use crate::{
 	issue::GitCodeIssue,
 	middleware::{HeaderMiddleware, ResponseMiddleware},
 	org::GitCodeOrg,
+	release::GitCodeRelease,
 	repo::GitCodeRepo,
 	user::GitCodeUser,
 };
 use async_trait::async_trait;
+pub use nipaw_core::{Client, Commit, Error, Issue, Org, Release, Repo, Result, User};
 use reqwest::Proxy;
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use std::sync::Arc;
@@ -119,6 +120,10 @@ impl Client for GitCodeClient {
 
 	fn issue(&self) -> Box<dyn Issue> {
 		Box::new(GitCodeIssue(self.inner.clone()))
+	}
+
+	fn release(&self) -> Box<dyn Release> {
+		Box::new(GitCodeRelease(self.inner.clone()))
 	}
 }
 

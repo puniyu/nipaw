@@ -7,8 +7,9 @@ pub use commit::Commit;
 mod org;
 pub use org::Org;
 mod issue;
-
 pub use issue::Issue;
+mod release;
+pub use release::Release;
 
 use crate::Result;
 use async_trait::async_trait;
@@ -55,4 +56,7 @@ pub trait Client: Send + Sync {
 
 	/// 获取议题实例
 	fn issue(&self) -> Box<dyn Issue>;
+
+	/// 获取release实例
+	fn release(&self) -> Box<dyn Release>;
 }

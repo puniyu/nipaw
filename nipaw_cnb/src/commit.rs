@@ -3,7 +3,8 @@ use crate::common::JsonValue;
 use async_trait::async_trait;
 use nipaw_core::option::commit::ListOptions;
 use nipaw_core::types::commit::CommitInfo;
-use nipaw_core::{Commit, Result};
+use nipaw_core::types::repo::RepoPath;
+use nipaw_core::{Commit, Error, Result};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -12,9 +13,12 @@ pub struct CnbCommit(pub(crate) Arc<CnbClientInner>);
 
 #[async_trait]
 impl Commit for CnbCommit {
-	async fn info(&self, repo_path: (&str, &str), sha: Option<&str>) -> Result<CommitInfo> {
+	async fn info(&self, repo_path: RepoPath<'_>, sha: Option<&str>) -> Result<CommitInfo> {
 		let (token, api_url, base_url) =
 			(&self.0.config.token, &self.0.config.api_url, &self.0.config.base_url);
+		if token.is_none() {
+			return Err(Error::TokenEmpty);
+		}
 		let url = format!(
 			"{}/{}/{}/-/git/commits/{}",
 			api_url,
@@ -76,10 +80,13 @@ impl Commit for CnbCommit {
 
 	async fn list(
 		&self,
-		repo_path: (&str, &str),
+		repo_path: RepoPath<'_>,
 		option: Option<ListOptions>,
 	) -> Result<Vec<CommitInfo>> {
 		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
+		if token.is_none() {
+			return Err(Error::TokenEmpty);
+		}
 		let url = format!("{}/{}/{}/-/commits", api_url, repo_path.0, repo_path.1);
 		let client = self.0.client.read().await;
 		let mut request = client.get(url);

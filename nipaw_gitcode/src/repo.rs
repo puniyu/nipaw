@@ -1,7 +1,7 @@
 use crate::GitCodeClientInner;
 use crate::common::JsonValue;
 use async_trait::async_trait;
-use nipaw_core::types::repo::{CollaboratorPermission, CollaboratorResult, RepoInfo};
+use nipaw_core::types::repo::{CollaboratorPermission, CollaboratorResult, RepoInfo, RepoPath};
 use nipaw_core::{Error, Repo, Result};
 use serde_json::Value;
 use std::sync::Arc;
@@ -10,8 +10,11 @@ pub struct GitCodeRepo(pub(crate) Arc<GitCodeClientInner>);
 
 #[async_trait]
 impl Repo for GitCodeRepo {
-	async fn info(&self, repo_path: (&str, &str)) -> Result<RepoInfo> {
+	async fn info(&self, repo_path: RepoPath<'_>) -> Result<RepoInfo> {
 		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
+		if token.is_none() {
+			return Err(Error::TokenEmpty);
+		}
 		let url = format!("{}/repos/{}/{}", api_url, repo_path.0, repo_path.1);
 		let client = self.0.client.read().await;
 		let mut request = client.get(url);
@@ -24,7 +27,7 @@ impl Repo for GitCodeRepo {
 
 	async fn add_repo_collaborator(
 		&self,
-		repo_path: (&str, &str),
+		repo_path: RepoPath<'_>,
 		user_name: &str,
 		permission: Option<CollaboratorPermission>,
 	) -> Result<CollaboratorResult> {

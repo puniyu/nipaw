@@ -3,20 +3,21 @@ mod common;
 mod isssue;
 mod middleware;
 mod org;
+mod release;
 mod repo;
 mod user;
-
-pub use nipaw_core::{Client, Commit, Error, Issue, Org, Repo, Result, User};
 
 use crate::{
 	commit::GitHubCommit,
 	isssue::GitHubIssue,
 	middleware::{HeaderMiddleware, ResponseMiddleware},
 	org::GitHubOrg,
+	release::GitHubRelease,
 	repo::GitHubRepo,
 	user::GitHubUser,
 };
 use async_trait::async_trait;
+pub use nipaw_core::{Client, Commit, Error, Issue, Org, Release, Repo, Result, User};
 use reqwest::Proxy;
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use std::sync::Arc;
@@ -134,5 +135,9 @@ impl Client for GitHubClient {
 
 	fn issue(&self) -> Box<dyn Issue> {
 		Box::new(GitHubIssue(self.inner.clone()))
+	}
+
+	fn release(&self) -> Box<dyn Release> {
+		Box::new(GitHubRelease(self.inner.clone()))
 	}
 }
