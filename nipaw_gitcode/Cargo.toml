@@ -1,6 +1,6 @@
 [package]
 name = "nipaw_gitcode"
-version = "0.12.2"
+version = "1.9.0"
 description = "GitCode provider for nipaw_core"
 authors.workspace = true
 license.workspace = true
@@ -21,5 +21,5 @@ serde_json.workspace = true
 itertools.workspace = true
 chrono.workspace = true
 
-nipaw_core = { path = "../nipaw_core", version = "0.12.2" }
+nipaw_core = { path = "../nipaw_core", version = "1.9.0" }
 
