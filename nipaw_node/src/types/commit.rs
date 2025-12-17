@@ -15,6 +15,15 @@ pub struct CommitInfo {
 	pub files: Vec<FileInfo>,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+#[napi(object)]
+pub struct CommitListInfo {
+	/// 提交的SHA
+	pub sha: String,
+	/// 提交的数据
+	pub commit: CommitData,
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 #[napi(object)]
 pub struct CommitData {
@@ -58,6 +67,12 @@ impl From<nipaw_core::types::commit::CommitInfo> for CommitInfo {
 			stats: value.stats.into(),
 			files: value.files.into_iter().map(|f| f.into()).collect(),
 		}
+	}
+}
+
+impl From<nipaw_core::types::commit::CommitListInfo> for CommitListInfo {
+	fn from(value: nipaw_core::types::commit::CommitListInfo) -> Self {
+		Self { sha: value.sha, commit: value.commit.into() }
 	}
 }
 

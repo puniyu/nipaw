@@ -6,7 +6,7 @@ use crate::{
 		UpdateIssueOptions, UpdateReleaseOptions,
 	},
 	types::{
-		commit::CommitInfo,
+		commit::{CommitInfo, CommitListInfo},
 		issue::IssueInfo,
 		org::OrgInfo,
 		release::ReleaseInfo,
@@ -218,7 +218,7 @@ macro_rules! impl_client {
 					owner: String,
 					repo: String,
 					option: Option<CommitListOptions>,
-				) -> Result<Vec<CommitInfo>> {
+				) -> Result<Vec<CommitListInfo>> {
 					let client = [<create_client_ $client_type:lower>]().await;
 					let commit_infos = client.commit().list((owner.as_str(), repo.as_str()), option.map(|o| o.into())).await?;
 					Ok(commit_infos.into_iter().map(|v| v.into()).collect())

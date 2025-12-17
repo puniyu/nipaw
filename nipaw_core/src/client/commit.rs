@@ -1,5 +1,5 @@
 use crate::option::commit::ListOptions;
-use crate::types::commit::CommitInfo;
+use crate::types::commit::{CommitInfo, CommitListInfo};
 use crate::types::repo::RepoPath;
 use async_trait::async_trait;
 
@@ -23,5 +23,5 @@ pub trait Commit: Send + Sync {
 		&self,
 		repo_path: RepoPath<'_>,
 		option: Option<ListOptions>,
-	) -> crate::Result<Vec<CommitInfo>>;
+	) -> crate::Result<Vec<CommitListInfo>>;
 }

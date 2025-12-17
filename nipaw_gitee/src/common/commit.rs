@@ -1,6 +1,6 @@
 use crate::common::JsonValue;
 use nipaw_core::types::commit::{
-	CommitData, CommitInfo, FileInfo, FileStatus, StatsInfo, UserInfo,
+	CommitData, CommitInfo, CommitListInfo, FileInfo, FileStatus, StatsInfo, UserInfo,
 };
 
 impl From<JsonValue> for CommitInfo {
@@ -17,6 +17,17 @@ impl From<JsonValue> for CommitInfo {
 				.and_then(|s| s.as_array())
 				.map(|arr| arr.iter().map(|v| JsonValue(v.clone()).into()).collect())
 				.unwrap(),
+		}
+	}
+}
+
+impl From<JsonValue> for CommitListInfo {
+	fn from(commit: JsonValue) -> Self {
+		let commit_info = commit.0;
+		let commit_value = commit_info.get("commit").unwrap().clone();
+		Self {
+			sha: commit_info.get("sha").and_then(|v| v.as_str()).unwrap().to_string(),
+			commit: JsonValue(commit_value).into(),
 		}
 	}
 }
