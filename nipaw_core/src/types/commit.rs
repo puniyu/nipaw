@@ -14,6 +14,14 @@ pub struct CommitInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CommitListInfo {
+	/// 提交的SHA
+	pub sha: String,
+	/// 提交的数据
+	pub commit: CommitData,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CommitData {
 	/// 作者信息
 	pub author: UserInfo,

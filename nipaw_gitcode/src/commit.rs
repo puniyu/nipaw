@@ -2,7 +2,7 @@ use crate::GitCodeClientInner;
 use crate::common::JsonValue;
 use async_trait::async_trait;
 use nipaw_core::option::commit::ListOptions;
-use nipaw_core::types::commit::{CommitInfo, FileInfo};
+use nipaw_core::types::commit::{CommitInfo, CommitListInfo, FileInfo};
 use nipaw_core::types::repo::RepoPath;
 use nipaw_core::{Commit, Error, Result};
 use serde_json::Value;
@@ -138,7 +138,7 @@ impl Commit for GitCodeCommit {
 		&self,
 		repo_path: RepoPath<'_>,
 		option: Option<ListOptions>,
-	) -> Result<Vec<CommitInfo>> {
+	) -> Result<Vec<CommitListInfo>> {
 		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
 		if token.is_none() {
 			return Err(Error::TokenEmpty);
