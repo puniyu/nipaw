@@ -27,7 +27,6 @@ impl GitCodeCommit {
 		);
 		let resp = client.get(&url).query(&[("straight", true)]).bearer_auth(token).send().await?;
 		let json = resp.json::<JsonValue>().await?;
-		println!("res: {:#?}", json);
 		let files = json
 			.0
 			.get("files")
@@ -130,7 +129,7 @@ impl Commit for GitCodeCommit {
 			.0
 			.as_object_mut()
 			.unwrap()
-			.insert("files".to_string(), serde_json::to_value(&files).unwrap());
+			.insert("files".to_string(), serde_json::to_value(&files)?);
 		Ok(commit_info.into())
 	}
 
