@@ -1,6 +1,6 @@
 [package]
 name = "nipaw_cnb"
-version = "1.9.0"
+version = "1.9.1"
 description = "Cnb Cool provider for nipaw_core"
 authors.workspace = true
 license.workspace = true
@@ -22,5 +22,5 @@ serde_json.workspace = true
 chrono.workspace = true
 futures.workspace = true
 
-nipaw_core = { path = "../nipaw_core", version = "1.9.0" }
+nipaw_core = { path = "../nipaw_core", version = "1.9.1" }
 

@@ -1,5 +1,20 @@
 # 变更日志
 
+## [1.9.1](https://github.com/puniyu/nipaw/compare/gitcode-v1.9.0...gitcode-v1.9.1) (2025-12-27)
+
+
+### 🐛 错误修复
+
+* **commit:** 添加 CommitListInfo 类型以支持提交列表功能 ([037d40b](https://github.com/puniyu/nipaw/commit/037d40bba1a5b591438ff404f18d6145930f0a03))
+* **commit:** 移除调试打印语句 ([f2456e9](https://github.com/puniyu/nipaw/commit/f2456e9b3fd5541567c559f765cb425accc43b2c))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * nipaw_core bumped from 1.9.0 to 1.9.1
+
 ## [1.9.0](https://github.com/puniyu/nipaw/compare/gitcode-v0.12.1...gitcode-v1.9.0) (2025-12-13)
 
 

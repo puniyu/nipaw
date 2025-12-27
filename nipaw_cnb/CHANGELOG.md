@@ -1,5 +1,19 @@
 # 变更日志
 
+## [1.9.1](https://github.com/puniyu/nipaw/compare/cnb-v1.9.0...cnb-v1.9.1) (2025-12-27)
+
+
+### 🐛 错误修复
+
+* **commit:** 添加 CommitListInfo 类型以支持提交列表功能 ([037d40b](https://github.com/puniyu/nipaw/commit/037d40bba1a5b591438ff404f18d6145930f0a03))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * nipaw_core bumped from 1.9.0 to 1.9.1
+
 ## [1.9.0](https://github.com/puniyu/nipaw/compare/cnb-v0.12.1...cnb-v1.9.0) (2025-12-13)
 
 

@@ -1,5 +1,12 @@
 # 变更日志
 
+## [1.9.1](https://github.com/puniyu/nipaw/compare/core-v1.9.0...core-v1.9.1) (2025-12-27)
+
+
+### 🐛 错误修复
+
+* **commit:** 添加 CommitListInfo 类型以支持提交列表功能 ([037d40b](https://github.com/puniyu/nipaw/commit/037d40bba1a5b591438ff404f18d6145930f0a03))
+
 ## [1.9.0](https://github.com/puniyu/nipaw/compare/core-v0.11.1...core-v1.9.0) (2025-12-13)
 
 
