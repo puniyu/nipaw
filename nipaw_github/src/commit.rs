@@ -13,13 +13,13 @@ pub struct GitHubCommit(pub(crate) Arc<GitHubClientInner>);
 
 #[async_trait]
 impl Commit for GitHubCommit {
-	async fn info(&self, repo_path: RepoPath<'_>, sha: Option<&str>) -> Result<CommitInfo> {
+	async fn info(&self, repo_path: RepoPath, sha: Option<&str>) -> Result<CommitInfo> {
 		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
 		let url = format!(
 			"{}/repos/{}/{}/commits/{}",
 			api_url,
-			repo_path.0,
-			repo_path.1,
+			repo_path.owner,
+			repo_path.repo,
 			sha.unwrap_or("HEAD")
 		);
 		let client = self.0.client.read().await;
@@ -28,6 +28,7 @@ impl Commit for GitHubCommit {
 			request = request.bearer_auth(token);
 		}
 		let mut res = request.send().await?.json::<JsonValue>().await?;
+		println!("{:#?}", res);
 		let author_avatar_url = res
 			.0
 			.get("author")
@@ -66,11 +67,11 @@ impl Commit for GitHubCommit {
 
 	async fn list(
 		&self,
-		repo_path: RepoPath<'_>,
+		repo_path: RepoPath,
 		option: Option<ListOptions>,
 	) -> Result<Vec<CommitListInfo>> {
 		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
-		let url = format!("{}/repos/{}/{}/commits", api_url, repo_path.0, repo_path.1);
+		let url = format!("{}/repos/{}/{}/commits", api_url, repo_path.owner, repo_path.repo);
 		let client = self.0.client.read().await;
 		let mut request = client.get(url);
 		let mut params: HashMap<&str, String> = HashMap::new();

@@ -10,7 +10,7 @@ use crate::{
 		issue::IssueInfo,
 		org::OrgInfo,
 		release::ReleaseInfo,
-		repo::{CollaboratorPermission, CollaboratorResult, RepoInfo},
+		repo::{CollaboratorPermission, CollaboratorResult, RepoInfo, RepoPath},
 		user::{ContributionResult, UserInfo},
 	},
 };
@@ -76,15 +76,15 @@ macro_rules! impl_client {
 				///
 				/// ## 参数
 				/// - `user_name` 用户名称, 为空时获取当前登录用户仓库列表
-				/// - `option` 仓库列表选项
+				/// - `options` 仓库列表选项
 				#[napi]
 				pub async fn repo_list(
 					&self,
 					user_name: Option<String>,
-					option: Option<RepoListOptions>,
+					options: Option<RepoListOptions>,
 				) -> Result<Vec<RepoInfo>> {
 					let client = [<create_client_ $client_type:lower>]().await;
-					let repo_infos = client.user().repo_list(user_name.as_deref(), option.map(|o| o.into())).await?;
+					let repo_infos = client.user().repo_list(user_name.as_deref(), options.map(|o| o.into())).await?;
 					Ok(repo_infos.into_iter().map(|v| v.into()).collect())
 				}
 			}
@@ -122,15 +122,15 @@ macro_rules! impl_client {
 				///
 				/// ## 参数
 				/// - `org_name` 组织名称
-				/// - `option` 仓库列表选项
+				/// - `options` 仓库列表选项
 				#[napi]
 				pub async fn repo_list(
 					&self,
 					org_name: String,
-					option: Option<RepoListOptions>,
+					options: Option<RepoListOptions>,
 				) -> Result<Vec<RepoInfo>> {
 					let client = [<create_client_ $client_type:lower>]().await;
-					let repo_infos = client.org().repo_list(org_name.as_str(), option.map(|o| o.into())).await?;
+					let repo_infos = client.org().repo_list(org_name.as_str(), options.map(|o| o.into())).await?;
 					Ok(repo_infos.into_iter().map(|v| v.into()).collect())
 				}
 			}
@@ -148,9 +148,9 @@ macro_rules! impl_client {
 				/// - `owner` 仓库所有者
 				/// - `repo` 仓库名称
 				#[napi]
-				pub async fn info(&self, owner: String, repo: String) -> Result<RepoInfo> {
+				pub async fn info(&self, repo_path: RepoPath) -> Result<RepoInfo> {
 					let client = [<create_client_ $client_type:lower>]().await;
-					let repo_info = client.repo().info((owner.as_str(), repo.as_str())).await?;
+					let repo_info = client.repo().info(repo_path.into()).await?;
 					Ok(repo_info.into())
 				}
 
@@ -164,15 +164,14 @@ macro_rules! impl_client {
 				#[napi]
 				pub async fn add_collaborator(
 					&self,
-					owner: String,
-					repo: String,
+					repo_path: RepoPath,
 					user_name: String,
 					permission: Option<CollaboratorPermission>,
 				) -> Result<CollaboratorResult> {
 					let client = [<create_client_ $client_type:lower>]().await;
 					let collaborator_result = client
 						.repo().add_repo_collaborator(
-							(owner.as_str(), repo.as_str()),
+							repo_path.into(),
 							user_name.as_str(),
 							permission.map(|p| p.into()),
 						)
@@ -197,12 +196,11 @@ macro_rules! impl_client {
 				#[napi]
 				pub async fn info(
 					&self,
-					owner: String,
-					repo: String,
+					repo_path: RepoPath,
 					sha: Option<String>,
 				) -> Result<CommitInfo> {
 					let client = [<create_client_ $client_type:lower>]().await;
-					let commit_info = client.commit().info((owner.as_str(), repo.as_str()), sha.as_deref()).await?;
+					let commit_info = client.commit().info(repo_path.into(), sha.as_deref()).await?;
 					Ok(commit_info.into())
 				}
 
@@ -211,16 +209,15 @@ macro_rules! impl_client {
 				/// ## 参数
 				/// - `owner` 仓库所有者
 				/// - `repo` 仓库名称
-				/// - `option` 提交列表选项
+				/// - `options` 提交列表选项
 				#[napi]
 				pub async fn list(
 					&self,
-					owner: String,
-					repo: String,
-					option: Option<CommitListOptions>,
+					repo_path: RepoPath,
+					options: Option<CommitListOptions>,
 				) -> Result<Vec<CommitListInfo>> {
 					let client = [<create_client_ $client_type:lower>]().await;
-					let commit_infos = client.commit().list((owner.as_str(), repo.as_str()), option.map(|o| o.into())).await?;
+					let commit_infos = client.commit().list(repo_path.into(), options.map(|o| o.into())).await?;
 					Ok(commit_infos.into_iter().map(|v| v.into()).collect())
 				}
 			}
@@ -244,17 +241,15 @@ macro_rules! impl_client {
 				#[napi]
 				pub async fn create(
 					&self,
-					owner: String,
-					repo: String,
+					repo_path: RepoPath,
 					tag_name: String,
 					name: Option<String>,
 					body: Option<String>,
 					target_commitish: Option<String>,
 				) -> Result<ReleaseInfo> {
 					let client = [<create_client_ $client_type:lower>]().await;
-					let repo_path = (owner.as_str(), repo.as_str());
 					let release_info = client.release().create(
-						repo_path,
+						repo_path.into(),
 						tag_name.as_str(),
 						name.as_deref(),
 						body.as_deref(),
@@ -272,13 +267,11 @@ macro_rules! impl_client {
 				#[napi]
 				pub async fn info(
 					&self,
-					owner: String,
-					repo: String,
+					repo_path: RepoPath,
 					tag_name: Option<String>,
 				) -> Result<ReleaseInfo> {
 					let client = [<create_client_ $client_type:lower>]().await;
-					let repo_path = (owner.as_str(), repo.as_str());
-					let release_info = client.release().info(repo_path, tag_name.as_deref()).await?;
+					let release_info = client.release().info(repo_path.into(), tag_name.as_deref()).await?;
 					Ok(release_info.into())
 				}
 
@@ -290,12 +283,10 @@ macro_rules! impl_client {
 				#[napi]
 				pub async fn list(
 					&self,
-					owner: String,
-					repo: String,
+					repo_path: RepoPath,
 				) -> Result<Vec<ReleaseInfo>> {
 					let client = [<create_client_ $client_type:lower>]().await;
-					let repo_path = (owner.as_str(), repo.as_str());
-					let release_infos = client.release().list(repo_path).await?;
+					let release_infos = client.release().list(repo_path.into()).await?;
 					Ok(release_infos.into_iter().map(|v| v.into()).collect())
 				}
 
@@ -305,18 +296,16 @@ macro_rules! impl_client {
 				/// - `owner` 仓库所有者
 				/// - `repo` 仓库名称
 				/// - `tag_name` 标签名称
-				/// - `option` 更新参数
+				/// - `options` 更新参数
 				#[napi]
 				pub async fn update(
 					&self,
-					owner: String,
-					repo: String,
+					repo_path: RepoPath,
 					tag_name: String,
-					option: UpdateReleaseOptions,
+					options: UpdateReleaseOptions,
 				) -> Result<ReleaseInfo> {
 					let client = [<create_client_ $client_type:lower>]().await;
-					let repo_path = (owner.as_str(), repo.as_str());
-					let release_info = client.release().update(repo_path, tag_name.as_str(), option.into()).await?;
+					let release_info = client.release().update(repo_path.into(), tag_name.as_str(), options.into()).await?;
 					Ok(release_info.into())
 				}
 			}
@@ -335,19 +324,17 @@ macro_rules! impl_client {
 				/// - `repo` 仓库名称
 				/// - `title` issue标题
 				/// - `body` issue内容
-				/// - `option` 创建issue选项
+				/// - `options` 创建issue选项
 				#[napi]
 				pub async fn create(
 					&self,
-					owner: String,
-					repo: String,
+					repo_path: RepoPath,
 					title: String,
 					body: Option<String>,
-					option: Option<CreateIssueOptions>,
+					options: Option<CreateIssueOptions>,
 				) -> Result<IssueInfo> {
 					let client = [<create_client_ $client_type:lower>]().await;
-					let repo_path = (owner.as_str(), repo.as_str());
-					let issue_info = client.issue().create(repo_path, title.as_str(), body.as_deref(), option.map(|o| o.into())).await?;
+					let issue_info = client.issue().create(repo_path.into(), title.as_str(), body.as_deref(), options.map(|o| o.into())).await?;
 					Ok(issue_info.into())
 				}
 
@@ -358,10 +345,13 @@ macro_rules! impl_client {
 				/// - `repo` 仓库名称
 				/// - `issue_number` issue编号
 				#[napi]
-				pub async fn info(&self, owner: String, repo: String, issue_number: String) -> Result<IssueInfo> {
+				pub async fn info(
+					&self,
+					repo_path: RepoPath,
+					issue_number: String
+				) -> Result<IssueInfo> {
 					let client = [<create_client_ $client_type:lower>]().await;
-					let repo_path = (owner.as_str(), repo.as_str());
-					let issue_info = client.issue().info(repo_path, issue_number.as_str()).await?;
+					let issue_info = client.issue().info(repo_path.into(), issue_number.as_str()).await?;
 					Ok(issue_info.into())
 				}
 
@@ -370,12 +360,15 @@ macro_rules! impl_client {
 				/// ## 参数
 				/// - `owner` 仓库所有者
 				/// - `repo` 仓库名称
-				/// - `option` issue列表选项
+				/// - `options` issue列表选项
 				#[napi]
-				pub async fn list(&self, owner: String, repo: String, option: Option<IssueListOptions>) -> Result<Vec<IssueInfo>> {
+				pub async fn list(
+					&self,
+					repo_path: RepoPath,
+					options: Option<IssueListOptions>
+				) -> Result<Vec<IssueInfo>> {
 					let client = [<create_client_ $client_type:lower>]().await;
-					let repo_path = (owner.as_str(), repo.as_str());
-					let issue_infos = client.issue().list(repo_path, option.map(|o| o.into())).await?;
+					let issue_infos = client.issue().list(repo_path.into(), options.map(|o| o.into())).await?;
 					Ok(issue_infos.into_iter().map(|v| v.into()).collect())
 				}
 
@@ -387,10 +380,14 @@ macro_rules! impl_client {
 				/// - `issue_number` issue编号
 				/// - `options` 更新issue选项
 				#[napi]
-				pub async fn update(&self, owner: String, repo: String, issue_number: String, options: Option<UpdateIssueOptions>) -> Result<IssueInfo> {
+				pub async fn update(
+					&self,
+					repo_path: RepoPath,
+					issue_number: String,
+					options: Option<UpdateIssueOptions>
+				) -> Result<IssueInfo> {
 					let client = [<create_client_ $client_type:lower>]().await;
-					let repo_path = (owner.as_str(), repo.as_str());
-					let issue_info = client.issue().update(repo_path, issue_number.as_str(), options.map(|o| o.into())).await?;
+					let issue_info = client.issue().update(repo_path.into(), issue_number.as_str(), options.map(|o| o.into())).await?;
 					Ok(issue_info.into())
 				}
 			}

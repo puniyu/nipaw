@@ -15,7 +15,7 @@ pub struct CnbIssue(pub(crate) Arc<CnbClientInner>);
 impl Issue for CnbIssue {
 	async fn create(
 		&self,
-		repo_path: RepoPath<'_>,
+		repo_path: RepoPath,
 		title: &str,
 		body: Option<&str>,
 		option: Option<CreateOptions>,
@@ -25,7 +25,7 @@ impl Issue for CnbIssue {
 			return Err(Error::TokenEmpty);
 		}
 		let client = self.0.client.read().await;
-		let url = format!("{}/{}/{}/-/issues", api_url, repo_path.0, repo_path.1);
+		let url = format!("{}/{}/{}/-/issues", api_url, repo_path.owner, repo_path.repo);
 		let request = client.post(url).bearer_auth(token.as_ref().unwrap());
 		let mut req_body: HashMap<&str, String> = HashMap::new();
 		req_body.insert("title", title.to_string());
@@ -54,12 +54,12 @@ impl Issue for CnbIssue {
 		Ok(res.into())
 	}
 
-	async fn info(&self, repo_path: RepoPath<'_>, issue_number: &str) -> Result<IssueInfo> {
+	async fn info(&self, repo_path: RepoPath, issue_number: &str) -> Result<IssueInfo> {
 		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
 		if token.is_none() {
 			return Err(Error::TokenEmpty);
 		}
-		let url = format!("{}/{}/{}/-/issues/{}", api_url, repo_path.0, repo_path.1, issue_number);
+		let url = format!("{}/{}/{}/-/issues/{}", api_url, repo_path.owner, repo_path.repo, issue_number);
 		let client = self.0.client.read().await;
 		let request = client.get(url).bearer_auth(token.as_ref().unwrap());
 		let mut res = request.send().await?.json::<JsonValue>().await?;
@@ -77,7 +77,7 @@ impl Issue for CnbIssue {
 
 	async fn list(
 		&self,
-		repo_path: RepoPath<'_>,
+		repo_path: RepoPath,
 		options: Option<ListOptions>,
 	) -> Result<Vec<IssueInfo>> {
 		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
@@ -85,7 +85,7 @@ impl Issue for CnbIssue {
 			return Err(Error::TokenEmpty);
 		}
 
-		let url = format!("{}/{}/{}/-/issues", api_url, repo_path.0, repo_path.1);
+		let url = format!("{}/{}/{}/-/issues", api_url, repo_path.owner, repo_path.repo);
 		let client = self.0.client.read().await;
 		let request = client.get(url).bearer_auth(token.as_ref().unwrap());
 		let mut params: HashMap<&str, String> = HashMap::new();
@@ -144,7 +144,7 @@ impl Issue for CnbIssue {
 
 	async fn update(
 		&self,
-		repo_path: RepoPath<'_>,
+		repo_path: RepoPath,
 		issue_number: &str,
 		options: Option<UpdateOptions>,
 	) -> Result<IssueInfo> {
@@ -152,7 +152,7 @@ impl Issue for CnbIssue {
 		if token.is_none() {
 			return Err(Error::TokenEmpty);
 		}
-		let url = format!("{}/{}/{}/-/issues/{}", api_url, repo_path.0, repo_path.1, issue_number);
+		let url = format!("{}/{}/{}/-/issues/{}", api_url, repo_path.owner, repo_path.repo, issue_number);
 		let client = self.0.client.read().await;
 		let request = client.put(url).bearer_auth(token.as_ref().unwrap());
 		let mut req_body: HashMap<&str, String> = HashMap::new();

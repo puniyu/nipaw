@@ -13,7 +13,7 @@ pub struct GitCodeRelease(pub(crate) Arc<GitCodeClientInner>);
 impl Release for GitCodeRelease {
 	async fn create(
 		&self,
-		repo_path: RepoPath<'_>,
+		repo_path: RepoPath,
 		tag_name: &str,
 		name: Option<&str>,
 		body: Option<&str>,
@@ -24,7 +24,7 @@ impl Release for GitCodeRelease {
 			return Err(Error::TokenEmpty);
 		}
 		let client = self.0.client.read().await;
-		let url = format!("{}/repos/{}/{}/releases", api_url, repo_path.0, repo_path.1);
+		let url = format!("{}/repos/{}/{}/releases", api_url, repo_path.owner, repo_path.repo);
 		let request = client.post(url).bearer_auth(token.as_ref().unwrap());
 		let json_body = serde_json::json!({
 			"tag_name": tag_name,
@@ -37,19 +37,19 @@ impl Release for GitCodeRelease {
 		Ok(res.into())
 	}
 
-	async fn info(&self, repo_path: RepoPath<'_>, tag_name: Option<&str>) -> Result<ReleaseInfo> {
+	async fn info(&self, repo_path: RepoPath, tag_name: Option<&str>) -> Result<ReleaseInfo> {
 		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
 		if token.is_none() {
 			return Err(Error::TokenEmpty);
 		}
 		let url = if tag_name.is_none() {
-			format!("{}/repos/{}/{}/releases/latest", api_url, repo_path.0, repo_path.1)
+			format!("{}/repos/{}/{}/releases/latest", api_url, repo_path.owner, repo_path.repo)
 		} else {
 			format!(
 				"{}/repos/{}/{}/releases/tags/{}",
 				api_url,
-				repo_path.0,
-				repo_path.1,
+				repo_path.repo,
+				repo_path.owner,
 				tag_name.unwrap()
 			)
 		};
@@ -62,12 +62,12 @@ impl Release for GitCodeRelease {
 		Ok(res.into())
 	}
 
-	async fn list(&self, repo_path: RepoPath<'_>) -> Result<Vec<ReleaseInfo>> {
+	async fn list(&self, repo_path: RepoPath) -> Result<Vec<ReleaseInfo>> {
 		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
 		if token.is_none() {
 			return Err(Error::TokenEmpty);
 		}
-		let url = format!("{}/repos/{}/{}/releases", api_url, repo_path.0, repo_path.1);
+		let url = format!("{}/repos/{}/{}/releases", api_url, repo_path.owner, repo_path.repo);
 		let client = self.0.client.read().await;
 		let mut request = client.get(url);
 		if let Some(token) = token {
@@ -79,7 +79,7 @@ impl Release for GitCodeRelease {
 
 	async fn update(
 		&self,
-		repo_path: RepoPath<'_>,
+		repo_path: RepoPath,
 		tag_name: &str,
 		option: UpdateOption,
 	) -> Result<ReleaseInfo> {
@@ -88,7 +88,7 @@ impl Release for GitCodeRelease {
 			return Err(Error::TokenEmpty);
 		}
 		let url =
-			format!("{}/repos/{}/{}/releases/{}", api_url, repo_path.0, repo_path.1, tag_name);
+			format!("{}/repos/{}/{}/releases/{}", api_url, repo_path.owner, repo_path.repo, tag_name);
 		let client = self.0.client.read().await;
 		let mut request = client.patch(url);
 		if let Some(token) = token {

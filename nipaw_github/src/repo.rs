@@ -10,9 +10,9 @@ pub struct GitHubRepo(pub(crate) Arc<GitHubClientInner>);
 
 #[async_trait]
 impl Repo for GitHubRepo {
-	async fn info(&self, repo_path: RepoPath<'_>) -> Result<RepoInfo> {
+	async fn info(&self, repo_path: RepoPath) -> Result<RepoInfo> {
 		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
-		let url = format!("{}/repos/{}/{}", api_url, repo_path.0, repo_path.1);
+		let url = format!("{}/repos/{}/{}", api_url, repo_path.owner, repo_path.repo);
 		let client = self.0.client.read().await;
 		let mut request = client.get(url);
 		if let Some(token) = token {
@@ -25,14 +25,14 @@ impl Repo for GitHubRepo {
 
 	async fn add_repo_collaborator(
 		&self,
-		repo_path: RepoPath<'_>,
+		repo_path: RepoPath,
 		user_name: &str,
 		permission: Option<CollaboratorPermission>,
 	) -> Result<CollaboratorResult> {
 		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
 		let url = format!(
 			"{}/repos/{}/{}/collaborators/{}",
-			api_url, repo_path.0, repo_path.1, user_name
+			api_url, repo_path.owner, repo_path.repo, user_name
 		);
 		let client = self.0.client.read().await;
 		let mut request = client.put(url);

@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use std::fmt::Display;
 use strum::{Display, EnumString, IntoStaticStr};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -61,4 +62,40 @@ pub enum CollaboratorPermission {
 	Pull,
 }
 
-pub type RepoPath<'r> = (&'r str, &'r str);
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct RepoPath {
+	/// 仓库所有者
+	pub owner: String,
+	/// 仓库名称
+	pub repo: String,
+}
+
+impl RepoPath {
+	pub fn new(owner: impl Into<String>, repo: impl Into<String>) -> Self {
+		Self { owner: owner.into(), repo: repo.into() }
+	}
+}
+
+impl<'r> From<(&'r str, &'r str)> for RepoPath {
+	fn from(repo_path: (&'r str, &'r str)) -> Self {
+		Self {
+			owner: repo_path.0.to_string(),
+			repo: repo_path.1.to_string(),
+		}
+	}
+}
+
+impl From<(String, String)> for RepoPath {
+	fn from(repo_path: (String, String)) -> Self {
+		Self {
+			owner: repo_path.0,
+			repo: repo_path.1,
+		}
+	}
+}
+
+impl Display for RepoPath {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		write!(f, "{}/{}", self.owner, self.repo)
+	}
+}

@@ -11,7 +11,7 @@ pub trait Release: Send + Sync {
 	/// 当为传入参数为[None]则使用tag_name
 	///
 	/// ## 参数
-	/// * `repo_path` - 仓库路径，格式为 `(owner, repo)`
+	/// * `repo_path` - 仓库路径
 	/// * `tag_name` - 标签名称
 	/// * `name` - Release名称
 	/// * `body` - Release内容
@@ -19,7 +19,7 @@ pub trait Release: Send + Sync {
 	///
 	async fn create(
 		&self,
-		repo_path: RepoPath<'_>,
+		repo_path: RepoPath,
 		tag_name: &str,
 		name: Option<&str>,
 		body: Option<&str>,
@@ -31,28 +31,28 @@ pub trait Release: Send + Sync {
 	/// 当不传入参数时，获取最新Release信息
 	///
 	/// ## 参数
-	/// * `repo_path` - 仓库路径，格式为 `(owner, repo)`
+	/// * `repo_path` - 仓库路径
 	/// * `tag_name` - 标签名称
 	///
-	async fn info(&self, repo_path: RepoPath<'_>, tag_name: Option<&str>) -> Result<ReleaseInfo>;
+	async fn info(&self, repo_path: RepoPath, tag_name: Option<&str>) -> Result<ReleaseInfo>;
 
 	/// 获取Release列表
 	///
 	/// ## 参数
-	/// * `repo_path` - 仓库路径，格式为 `(owner, repo)`
+	/// * `repo_path` - 仓库路径
 	///
-	async fn list(&self, repo_path: RepoPath<'_>) -> Result<Vec<ReleaseInfo>>;
+	async fn list(&self, repo_path: RepoPath) -> Result<Vec<ReleaseInfo>>;
 
 	/// 更新Release
 	///
 	/// ## 参数
-	/// * `repo_path` - 仓库路径，格式为 `(owner, repo)`
+	/// * `repo_path` - 仓库路径
 	/// * `tag_name` - 标签名称
 	/// * `option` - 更新参数，参考[UpdateOption]
 	///
 	async fn update(
 		&self,
-		repo_path: RepoPath<'_>,
+		repo_path: RepoPath,
 		tag_name: &str,
 		option: UpdateOption,
 	) -> Result<ReleaseInfo>;

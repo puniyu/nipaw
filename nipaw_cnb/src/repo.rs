@@ -11,12 +11,12 @@ pub struct CnbRepo(pub(crate) Arc<CnbClientInner>);
 
 #[async_trait]
 impl Repo for CnbRepo {
-	async fn info(&self, repo_path: RepoPath<'_>) -> Result<RepoInfo> {
+	async fn info(&self, repo_path: RepoPath) -> Result<RepoInfo> {
 		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
 		if token.is_none() {
 			return Err(Error::TokenEmpty);
 		}
-		let url = format!("{}/repos/{}/{}", api_url, repo_path.0, repo_path.1);
+		let url = format!("{}/repos/{}/{}", api_url, repo_path.owner, repo_path.repo);
 		let client = self.0.client.read().await;
 		let mut request = client.get(url);
 		if let Some(token) = token {
@@ -37,7 +37,7 @@ impl Repo for CnbRepo {
 
 	async fn add_repo_collaborator(
 		&self,
-		repo_path: RepoPath<'_>,
+		repo_path: RepoPath,
 		user_name: &str,
 		permission: Option<CollaboratorPermission>,
 	) -> Result<CollaboratorResult> {
@@ -46,7 +46,7 @@ impl Repo for CnbRepo {
 		if token.is_none() {
 			return Err(Error::TokenEmpty);
 		}
-		let url = format!("{}/{}/{}/-/members/{}", api_url, repo_path.0, repo_path.1, user_name);
+		let url = format!("{}/{}/{}/-/members/{}", api_url, repo_path.owner, repo_path.repo, user_name);
 		let client = self.0.client.read().await;
 		let request = client.post(url).bearer_auth(token.as_ref().unwrap());
 		let permission = match permission {
@@ -62,20 +62,15 @@ impl Repo for CnbRepo {
 			"access_level": permission.to_string(),
 			"is_outside_collaborator": true,
 		});
-		let resp = request
+		request
 			.header(header::CONTENT_TYPE, "application/json")
 			.body(body.to_string())
 			.send()
 			.await?;
-		let status_code = resp.status().as_u16();
-		if status_code == 200 {
-			let collaborator = CollaboratorResult {
-				login: user_name.to_string(),
-				avatar_url: format!("{}/users/{}/avatar/l", base_url, user_name),
-			};
-			Ok(collaborator)
-		} else {
-			Err(Error::NotFound)
-		}
+		let collaborator = CollaboratorResult {
+			login: user_name.to_string(),
+			avatar_url: format!("{}/users/{}/avatar/l", base_url, user_name),
+		};
+		Ok(collaborator)
 	}
 }

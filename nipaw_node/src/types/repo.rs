@@ -106,3 +106,27 @@ impl From<CollaboratorPermission> for nipaw_core::types::repo::CollaboratorPermi
 		}
 	}
 }
+
+#[napi(object)]
+pub struct RepoPath {
+	/// 仓库所有者
+	pub owner: String,
+	/// 仓库名称
+	pub repo: String,
+}
+
+
+
+
+impl From<nipaw_core::types::repo::RepoPath> for RepoPath {
+	fn from(repo_path: nipaw_core::types::repo::RepoPath) -> Self {
+		Self { owner: repo_path.owner, repo: repo_path.repo }
+	}
+}
+
+impl From<RepoPath> for nipaw_core::types::repo::RepoPath {
+	fn from(repo_path: RepoPath) -> Self {
+		Self { owner: repo_path.owner, repo: repo_path.repo }
+	}
+}
+
