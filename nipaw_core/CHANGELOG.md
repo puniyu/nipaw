@@ -1,5 +1,17 @@
 # 变更日志
 
+## [1.9.2](https://github.com/puniyu/nipaw/compare/core-v1.9.1...core-v1.9.2) (2026-01-24)
+
+
+### 🔧 其他更新
+
+* **deps:** update rust crates ([#88](https://github.com/puniyu/nipaw/issues/88)) ([30aeaf7](https://github.com/puniyu/nipaw/commit/30aeaf7cd5c5bbd16a04c3affb3fcec227d1288d))
+
+
+### ♻️ 代码重构
+
+* **core:** 统一RepoPath参数类型并增强错误处理 ([26b80bc](https://github.com/puniyu/nipaw/commit/26b80bc0c38fe1a54ad4627dd50f955919b2cb17))
+
 ## [1.9.1](https://github.com/puniyu/nipaw/compare/core-v1.9.0...core-v1.9.1) (2025-12-27)
 
 
