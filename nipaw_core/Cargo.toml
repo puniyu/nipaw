@@ -1,6 +1,6 @@
 [package]
 name = "nipaw_core"
-version = "1.9.1"
+version = "1.9.2"
 description = "一个git平台的api封装库，core实现"
 authors.workspace = true
 license.workspace = true
