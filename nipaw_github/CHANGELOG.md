@@ -1,5 +1,19 @@
 # 变更日志
 
+## [1.9.3](https://github.com/puniyu/nipaw/compare/github-v1.9.2...github-v1.9.3) (2026-01-26)
+
+
+### ♻️ 代码重构
+
+* **types:** 移除枚举类型的string_enum标记并清理响应中间件中的调试输出 ([4c8cb2d](https://github.com/puniyu/nipaw/commit/4c8cb2d2702f9234046a9312e24eaa6d18e00b42))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * nipaw_core bumped from 1.9.2 to 1.9.3
+
 ## [1.9.2](https://github.com/puniyu/nipaw/compare/github-v1.9.1...github-v1.9.2) (2026-01-24)
 
 
