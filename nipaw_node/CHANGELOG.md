@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.3](https://github.com/puniyu/nipaw/compare/node-v1.9.2...node-v1.9.3) (2026-01-26)
+
+
+### ♻️ 代码重构
+
+* **types:** 移除枚举类型的string_enum标记并清理响应中间件中的调试输出 ([4c8cb2d](https://github.com/puniyu/nipaw/commit/4c8cb2d2702f9234046a9312e24eaa6d18e00b42))
+
 ## [1.9.2](https://github.com/puniyu/nipaw/compare/node-v1.9.1...node-v1.9.2) (2026-01-24)
 
 
