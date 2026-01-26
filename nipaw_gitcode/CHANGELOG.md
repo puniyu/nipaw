@@ -1,5 +1,19 @@
 # 变更日志
 
+## [1.9.4](https://github.com/puniyu/nipaw/compare/gitcode-v1.9.3...gitcode-v1.9.4) (2026-01-26)
+
+
+### 🔧 其他更新
+
+* **gitcode:** Synchronize nipaw versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * nipaw_core bumped from 1.9.3 to 1.9.4
+
 ## [1.9.3](https://github.com/puniyu/nipaw/compare/gitcode-v1.9.2...gitcode-v1.9.3) (2026-01-26)
 
 
