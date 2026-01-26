@@ -31,6 +31,7 @@
       "aarch64-unknown-linux-gnu",
       "aarch64-apple-darwin"
     ],
+    "constEnum": false,
     "dtsHeader": "// powered by nipaw_core\n"
   },
   "engines": {
