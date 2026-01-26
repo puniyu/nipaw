@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.4](https://github.com/puniyu/nipaw/compare/node-v1.9.3...node-v1.9.4) (2026-01-26)
+
+
+### 🔧 其他更新
+
+* **build:** 更新构建配置以禁用常量枚举 ([fd13253](https://github.com/puniyu/nipaw/commit/fd13253bee659e97164e7e2237e918acebb66a87))
+
 ## [1.9.3](https://github.com/puniyu/nipaw/compare/node-v1.9.2...node-v1.9.3) (2026-01-26)
 
 
