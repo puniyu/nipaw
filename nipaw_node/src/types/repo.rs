@@ -54,7 +54,7 @@ impl From<nipaw_core::types::repo::RepoInfo> for RepoInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[napi(string_enum)]
+#[napi]
 pub enum RepoVisibility {
 	/// 公开
 	Public,
@@ -87,7 +87,7 @@ impl From<nipaw_core::types::repo::CollaboratorResult> for CollaboratorResult {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[napi(string_enum)]
+#[napi]
 pub enum CollaboratorPermission {
 	/// 管理权限
 	Admin,

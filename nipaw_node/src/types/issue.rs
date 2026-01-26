@@ -26,7 +26,7 @@ pub struct IssueInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[napi(string_enum)]
+#[napi]
 pub enum StateType {
 	/// 已开启
 	Opened,

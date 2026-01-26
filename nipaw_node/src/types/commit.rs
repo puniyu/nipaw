@@ -123,7 +123,7 @@ pub struct FileInfo {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-#[napi(string_enum)]
+#[napi]
 pub enum FileStatus {
 	/// 新增文件
 	Added,
