@@ -1,5 +1,19 @@
 # 变更日志
 
+## [1.9.5](https://github.com/puniyu/nipaw/compare/gitee-v1.9.4...gitee-v1.9.5) (2026-01-27)
+
+
+### 🔧 其他更新
+
+* **gitee:** Synchronize nipaw versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * nipaw_core bumped from 1.9.4 to 1.9.5
+
 ## [1.9.4](https://github.com/puniyu/nipaw/compare/gitee-v1.9.3...gitee-v1.9.4) (2026-01-26)
 
 
