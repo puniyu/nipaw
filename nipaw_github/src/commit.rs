@@ -28,7 +28,6 @@ impl Commit for GitHubCommit {
 			request = request.bearer_auth(token);
 		}
 		let mut res = request.send().await?.json::<JsonValue>().await?;
-		println!("{:#?}", res);
 		let author_avatar_url = res
 			.0
 			.get("author")
