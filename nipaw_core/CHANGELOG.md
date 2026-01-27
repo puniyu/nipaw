@@ -1,5 +1,12 @@
 # 变更日志
 
+## [1.9.5](https://github.com/puniyu/nipaw/compare/core-v1.9.4...core-v1.9.5) (2026-01-27)
+
+
+### 🔧 其他更新
+
+* **core:** Synchronize nipaw versions
+
 ## [1.9.4](https://github.com/puniyu/nipaw/compare/core-v1.9.3...core-v1.9.4) (2026-01-26)
 
 

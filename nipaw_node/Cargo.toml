@@ -1,6 +1,6 @@
 [package]
 name = "nipaw_node"
-version = "1.9.4"
+version = "1.9.5"
 authors.workspace = true
 license.workspace = true
 readme.workspace = true

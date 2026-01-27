@@ -1,5 +1,19 @@
 # 变更日志
 
+## [1.9.5](https://github.com/puniyu/nipaw/compare/github-v1.9.4...github-v1.9.5) (2026-01-27)
+
+
+### ♻️ 代码重构
+
+* **commit:** 移除调试打印语句 ([e07fe98](https://github.com/puniyu/nipaw/commit/e07fe98b3a7f8e284ccd8885ba313edb75529ac6))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * nipaw_core bumped from 1.9.4 to 1.9.5
+
 ## [1.9.4](https://github.com/puniyu/nipaw/compare/github-v1.9.3...github-v1.9.4) (2026-01-26)
 
 

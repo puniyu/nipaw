@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.5](https://github.com/puniyu/nipaw/compare/node-v1.9.4...node-v1.9.5) (2026-01-27)
+
+
+### 🔧 其他更新
+
+* **node:** Synchronize nipaw versions
+
 ## [1.9.4](https://github.com/puniyu/nipaw/compare/node-v1.9.3...node-v1.9.4) (2026-01-26)
 
 
