@@ -12,6 +12,7 @@ pub struct ListOptions {
 }
 
 impl Default for ListOptions {
+	#[inline]
 	fn default() -> Self {
 		Self { per_page: default_per_page(), page: default_page() }
 	}

@@ -20,6 +20,7 @@ pub struct ListOptions {
 	pub until: Option<DateTime<Utc>>,
 }
 impl Default for ListOptions {
+	#[inline]
 	fn default() -> Self {
 		Self {
 			per_page: default_per_page(),

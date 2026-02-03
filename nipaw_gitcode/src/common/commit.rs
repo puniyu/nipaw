@@ -104,7 +104,7 @@ impl From<JsonValue> for FileInfo {
 
 impl From<JsonValue> for FileStatus {
 	fn from(value: JsonValue) -> Self {
-		match value.0.as_str() {
+		match value.0.as_str().map(|s| s.to_lowercase()).as_deref() {
 			Some("added") => Self::Added,
 			Some("modified") => Self::Modified,
 			Some("removed") => Self::Deleted,

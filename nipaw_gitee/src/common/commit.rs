@@ -98,13 +98,13 @@ impl From<JsonValue> for FileInfo {
 
 impl From<JsonValue> for FileStatus {
 	fn from(value: JsonValue) -> Self {
-		match value.0.as_str().unwrap() {
-			"added" => Self::Added,
-			"modified" => Self::Modified,
-			"removed" => Self::Deleted,
-			"renamed" => Self::Renamed,
-			"copied" => Self::Copied,
-			"changed" => Self::Changed,
+		match value.0.as_str().map(|s| s.to_lowercase()).as_deref() {
+			Some("added") => Self::Added,
+			Some("modified") => Self::Modified,
+			Some("removed") => Self::Deleted,
+			Some("renamed") => Self::Renamed,
+			Some("copied") => Self::Copied,
+			Some("changed") => Self::Changed,
 			_ => Self::UnChanged,
 		}
 	}
