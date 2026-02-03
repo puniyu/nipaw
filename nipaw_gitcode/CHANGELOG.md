@@ -1,5 +1,19 @@
 # 变更日志
 
+## [1.9.6](https://github.com/puniyu/nipaw/compare/gitcode-v1.9.5...gitcode-v1.9.6) (2026-02-03)
+
+
+### 🐛 错误修复
+
+* **common:** 修复文件状态解析 ([bb92e5b](https://github.com/puniyu/nipaw/commit/bb92e5b72588e7252143eeecd46cff6d6eb7c70a))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * nipaw_core bumped from 1.9.5 to 1.9.6
+
 ## [1.9.5](https://github.com/puniyu/nipaw/compare/gitcode-v1.9.4...gitcode-v1.9.5) (2026-01-27)
 
 
