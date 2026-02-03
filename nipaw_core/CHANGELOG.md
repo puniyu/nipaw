@@ -1,5 +1,12 @@
 # 变更日志
 
+## [1.9.6](https://github.com/puniyu/nipaw/compare/core-v1.9.5...core-v1.9.6) (2026-02-03)
+
+
+### 🐛 错误修复
+
+* **common:** 修复文件状态解析 ([bb92e5b](https://github.com/puniyu/nipaw/commit/bb92e5b72588e7252143eeecd46cff6d6eb7c70a))
+
 ## [1.9.5](https://github.com/puniyu/nipaw/compare/core-v1.9.4...core-v1.9.5) (2026-01-27)
 
 
