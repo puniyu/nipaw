@@ -28,7 +28,7 @@ async-trait = "0.1.89"
 http = "1.4.0"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.148"
-strum = { version = "0.27.2", features = ["derive"] }
+strum = { version = "0.28.0", features = ["derive"] }
 itertools = "0.14.0"
 futures = "0.3.31"
 tokio = "1.48.0"
