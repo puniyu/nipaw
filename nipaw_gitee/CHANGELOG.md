@@ -1,5 +1,19 @@
 # 变更日志
 
+## [1.9.7](https://github.com/puniyu/nipaw/compare/gitee-v1.9.6...gitee-v1.9.7) (2026-03-28)
+
+
+### 🔧 其他更新
+
+* **deps:** update rust crate scraper to v0.26.0 ([723bb8e](https://github.com/puniyu/nipaw/commit/723bb8e8629b875e1aa77c8e5c66f28ffaa0c495))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * nipaw_core bumped from 1.9.6 to 1.9.7
+
 ## [1.9.6](https://github.com/puniyu/nipaw/compare/gitee-v1.9.5...gitee-v1.9.6) (2026-02-03)
 
 

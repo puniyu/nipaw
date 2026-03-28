@@ -1,5 +1,19 @@
 # 变更日志
 
+## [1.9.7](https://github.com/puniyu/nipaw/compare/cnb-v1.9.6...cnb-v1.9.7) (2026-03-28)
+
+
+### 🔧 其他更新
+
+* **cnb:** Synchronize nipaw versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * nipaw_core bumped from 1.9.6 to 1.9.7
+
 ## [1.9.6](https://github.com/puniyu/nipaw/compare/cnb-v1.9.5...cnb-v1.9.6) (2026-02-03)
 
 

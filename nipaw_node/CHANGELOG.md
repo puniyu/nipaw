@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.9.7](https://github.com/puniyu/nipaw/compare/node-v1.9.6...node-v1.9.7) (2026-03-28)
+
+
+### 🔧 其他更新
+
+* **deps:** update dependency @napi-rs/cli to v3.6.0 ([#121](https://github.com/puniyu/nipaw/issues/121)) ([080f30b](https://github.com/puniyu/nipaw/commit/080f30bc5a64ea5bf58a9a5ffad093f23b64ae66))
+* **deps:** update rust crates ([#100](https://github.com/puniyu/nipaw/issues/100)) ([519fbdd](https://github.com/puniyu/nipaw/commit/519fbddc9f8921f8de721a9cd7513bfaf4c2aa86))
+* **deps:** update rust crates ([#120](https://github.com/puniyu/nipaw/issues/120)) ([90e68d4](https://github.com/puniyu/nipaw/commit/90e68d412602cc42a3503cafd86a518c813d7f26))
+
 ## [1.9.6](https://github.com/puniyu/nipaw/compare/node-v1.9.5...node-v1.9.6) (2026-02-03)
 
 
