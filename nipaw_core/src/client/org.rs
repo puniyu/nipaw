@@ -4,7 +4,7 @@ use crate::types::repo::RepoInfo;
 use async_trait::async_trait;
 
 #[async_trait]
-pub trait Org: Send + Sync {
+pub trait Org {
 	/// 获取组织信息
 	///
 	/// # 参数

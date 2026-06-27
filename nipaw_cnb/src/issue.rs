@@ -1,6 +1,6 @@
 use crate::common::JsonValue;
-use crate::{CnbClientInner, get_user_info};
 use async_trait::async_trait;
+use crate::{CnbClientInner, get_user_info};
 use futures::future::join_all;
 use nipaw_core::option::issue::{CreateOptions, ListOptions, UpdateOptions};
 use nipaw_core::types::issue::{IssueInfo, StateType};

@@ -1,6 +1,6 @@
 use crate::common::JsonValue;
-use crate::{CnbClientInner, get_repo_default_branch};
 use async_trait::async_trait;
+use crate::{CnbClientInner, get_repo_default_branch};
 use nipaw_core::types::repo::{CollaboratorPermission, CollaboratorResult, RepoInfo, RepoPath};
 use nipaw_core::{Error, Repo, Result};
 use reqwest::header;

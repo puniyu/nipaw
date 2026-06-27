@@ -4,7 +4,7 @@ use crate::types::repo::RepoPath;
 use async_trait::async_trait;
 
 #[async_trait]
-pub trait Issue: Send + Sync {
+pub trait Issue {
 	/// 创建一个issue
 	///
 	/// ## 参数

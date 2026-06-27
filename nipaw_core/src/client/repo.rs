@@ -2,7 +2,7 @@ use crate::types::repo::{CollaboratorPermission, CollaboratorResult, RepoInfo, R
 use async_trait::async_trait;
 
 #[async_trait]
-pub trait Repo: Send + Sync {
+pub trait Repo {
 	/// 获取仓库信息
 	///
 	/// # 参数

@@ -1,6 +1,6 @@
 use crate::GitHubClientInner;
-use crate::common::JsonValue;
 use async_trait::async_trait;
+use crate::common::JsonValue;
 use nipaw_core::option::commit::ListOptions;
 use nipaw_core::types::commit::{CommitInfo, CommitListInfo};
 use nipaw_core::types::repo::RepoPath;

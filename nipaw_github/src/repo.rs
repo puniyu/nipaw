@@ -1,6 +1,6 @@
 use crate::GitHubClientInner;
-use crate::common::JsonValue;
 use async_trait::async_trait;
+use crate::common::JsonValue;
 use http::header;
 use nipaw_core::types::repo::{CollaboratorPermission, CollaboratorResult, RepoInfo, RepoPath};
 use nipaw_core::{Repo, Result};

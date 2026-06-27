@@ -1,6 +1,6 @@
 use crate::CnbClientInner;
-use crate::common::JsonValue;
 use async_trait::async_trait;
+use crate::common::JsonValue;
 use nipaw_core::option::release::UpdateOption;
 use nipaw_core::types::release::ReleaseInfo;
 use nipaw_core::types::repo::RepoPath;
@@ -50,9 +50,9 @@ impl Release for CnbRelease {
 		let request = client.post(url).bearer_auth(token.as_ref().unwrap());
 		let json_body = serde_json::json!({
 			"tag_name": tag_name,
-			"name": if name.is_none() { tag_name } else { name.unwrap() },
-			"body": if body.is_none() { tag_name } else { body.unwrap() },
-			"target_commitish": if target_commitish.is_none() { "HEAD" } else { target_commitish.unwrap() }
+			"name": name.unwrap_or(tag_name),
+			"body": body.unwrap_or(tag_name),
+			"target_commitish": target_commitish.unwrap_or("HEAD")
 		});
 
 		let res = request.json(&json_body).send().await?.json::<JsonValue>().await?;
@@ -64,16 +64,16 @@ impl Release for CnbRelease {
 		if token.is_none() {
 			return Err(Error::TokenEmpty);
 		}
-		let url = if tag_name.is_none() {
-			format!("{}/{}/{}/-/releases/latest", api_url, repo_path.owner, repo_path.repo)
-		} else {
+		let url = if let Some(tag_name) = tag_name {
 			format!(
 				"{}/{}/{}/-/releases/tags/{}",
 				api_url,
 				repo_path.owner,
 				repo_path.repo,
-				tag_name.unwrap()
+				tag_name
 			)
+		} else {
+			format!("{}/{}/{}/-/releases/latest", api_url, repo_path.owner, repo_path.repo)
 		};
 		let client = self.0.client.read().await;
 		let mut request = client.get(url);
@@ -115,8 +115,8 @@ impl Release for CnbRelease {
 		let client = self.0.client.read().await;
 		let request = client.patch(url).bearer_auth(token.as_ref().unwrap());
 		let json_body = serde_json::json!({
-			"name": if option.name.is_none() { tag_name } else { option.name.as_ref().unwrap() },
-			"body": if option.body.is_none() { tag_name } else { option.body.as_ref().unwrap() }
+			"name": option.name.as_deref().unwrap_or(tag_name),
+			"body": option.body.as_deref().unwrap_or(tag_name)
 		});
 		let res = request.json(&json_body).send().await?.json::<JsonValue>().await?;
 		Ok(res.into())

@@ -4,7 +4,7 @@ use crate::types::user::{ContributionResult, UserInfo};
 use async_trait::async_trait;
 
 #[async_trait]
-pub trait User: Send + Sync {
+pub trait User {
 	/// 获取用户信息
 	///
 	/// 当参数未为[None],则获取当前用户信息

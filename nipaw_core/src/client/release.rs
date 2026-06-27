@@ -5,7 +5,7 @@ use crate::types::repo::RepoPath;
 use async_trait::async_trait;
 
 #[async_trait]
-pub trait Release: Send + Sync {
+pub trait Release {
 	/// 创建一个Release
 	///
 	/// 当为传入参数为[None]则使用tag_name

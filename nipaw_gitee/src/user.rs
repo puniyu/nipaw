@@ -1,6 +1,6 @@
 use crate::GiteeClientInner;
-use crate::common::{Html, JsonValue};
 use async_trait::async_trait;
+use crate::common::{Html, JsonValue};
 use nipaw_core::option::repo::ListOptions;
 use nipaw_core::types::{
 	repo::RepoInfo,

@@ -7,7 +7,7 @@ mod release;
 mod repo;
 mod user;
 
-pub use nipaw_core::{Client, Commit, Error, Issue, Org, Release, Repo, Result, User};
+pub use nipaw_core::{Client, Commit, Config, Error, Issue, Org, Provider, Release, Repo, Result, Token, User};
 
 use crate::{
 	commit::GiteeCommit,
@@ -18,8 +18,6 @@ use crate::{
 	repo::GiteeRepo,
 	user::GiteeUser,
 };
-use async_trait::async_trait;
-use reqwest::Proxy;
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -82,8 +80,7 @@ impl GiteeClient {
 	}
 }
 
-#[async_trait]
-impl Client for GiteeClient {
+impl Token for GiteeClient {
 	fn set_token(&mut self, token: &str) -> Result<()> {
 		if token.is_empty() {
 			return Err(Error::TokenEmpty);
@@ -91,36 +88,47 @@ impl Client for GiteeClient {
 		Arc::make_mut(&mut self.inner).config.set_token(token);
 		Ok(())
 	}
+}
 
+impl nipaw_core::Proxy for GiteeClient {
 	fn set_proxy(&mut self, proxy: &str) -> Result<()> {
-		let client = reqwest::Client::builder().proxy(Proxy::all(proxy)?).build()?;
+		let client = reqwest::Client::builder().proxy(reqwest::Proxy::all(proxy)?).build()?;
 		*self.inner.client.try_write().unwrap() = Arc::new(
 			ClientBuilder::new(client).with(HeaderMiddleware).with(ResponseMiddleware).build(),
 		);
 		Ok(())
 	}
+}
 
-	fn user(&self) -> Box<dyn User> {
-		Box::new(GiteeUser(self.inner.clone()))
+impl Provider for GiteeClient {
+	type User = GiteeUser;
+	type Org = GiteeOrg;
+	type Repo = GiteeRepo;
+	type Commit = GiteeCommit;
+	type Issue = GiteeIssue;
+	type Release = GiteeRelease;
+
+	fn user(&self) -> GiteeUser {
+		GiteeUser(self.inner.clone())
 	}
 
-	fn org(&self) -> Box<dyn Org> {
-		Box::new(GiteeOrg(self.inner.clone()))
+	fn org(&self) -> GiteeOrg {
+		GiteeOrg(self.inner.clone())
 	}
 
-	fn repo(&self) -> Box<dyn Repo> {
-		Box::new(GiteeRepo(self.inner.clone()))
+	fn repo(&self) -> GiteeRepo {
+		GiteeRepo(self.inner.clone())
 	}
 
-	fn commit(&self) -> Box<dyn Commit> {
-		Box::new(GiteeCommit(self.inner.clone()))
+	fn commit(&self) -> GiteeCommit {
+		GiteeCommit(self.inner.clone())
 	}
 
-	fn issue(&self) -> Box<dyn Issue> {
-		Box::new(GiteeIssue(self.inner.clone()))
+	fn issue(&self) -> GiteeIssue {
+		GiteeIssue(self.inner.clone())
 	}
 
-	fn release(&self) -> Box<dyn Release> {
-		Box::new(GiteeRelease(self.inner.clone()))
+	fn release(&self) -> GiteeRelease {
+		GiteeRelease(self.inner.clone())
 	}
 }

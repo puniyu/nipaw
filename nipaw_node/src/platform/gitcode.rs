@@ -1,0 +1,30 @@
+use super::{impl_client, impl_commit, impl_issue, impl_org, impl_release, impl_repo, impl_user};
+use crate::{
+	option::{
+		CommitListOptions, CreateIssueOptions, IssueListOptions, RepoListOptions,
+		UpdateIssueOptions, UpdateReleaseOptions,
+	},
+	types::{
+		commit::{CommitInfo, CommitListInfo},
+		issue::IssueInfo,
+		org::OrgInfo,
+		release::ReleaseInfo,
+		repo::{CollaboratorPermission, CollaboratorResult, RepoInfo, RepoPath},
+		user::{ContributionResult, UserInfo},
+	},
+};
+use napi::tokio::sync::{RwLock, RwLockWriteGuard};
+use napi_derive::napi;
+use nipaw_core::{Commit, Issue, Org, Provider, Proxy, Release, Repo, Token, User};
+use paste::paste;
+use std::sync::LazyLock;
+
+use crate::Result;
+
+impl_client!(GitCode, nipaw_gitcode::GitCodeClient);
+impl_user!(GitCode);
+impl_org!(GitCode);
+impl_repo!(GitCode);
+impl_commit!(GitCode);
+impl_release!(GitCode);
+impl_issue!(GitCode);

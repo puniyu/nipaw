@@ -17,9 +17,7 @@ use crate::{
 	repo::GitCodeRepo,
 	user::GitCodeUser,
 };
-use async_trait::async_trait;
-pub use nipaw_core::{Client, Commit, Error, Issue, Org, Release, Repo, Result, User};
-use reqwest::Proxy;
+pub use nipaw_core::{Client, Commit, Config, Error, Issue, Org, Provider, Release, Repo, Result, Token, User};
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -84,8 +82,7 @@ impl GitCodeClient {
 	}
 }
 
-#[async_trait]
-impl Client for GitCodeClient {
+impl Token for GitCodeClient {
 	fn set_token(&mut self, token: &str) -> Result<()> {
 		if token.is_empty() {
 			return Err(Error::TokenEmpty);
@@ -93,37 +90,48 @@ impl Client for GitCodeClient {
 		Arc::make_mut(&mut self.inner).config.set_token(token);
 		Ok(())
 	}
+}
 
+impl nipaw_core::Proxy for GitCodeClient {
 	fn set_proxy(&mut self, proxy: &str) -> Result<()> {
-		let client = reqwest::Client::builder().proxy(Proxy::all(proxy)?).build()?;
+		let client = reqwest::Client::builder().proxy(reqwest::Proxy::all(proxy)?).build()?;
 		*self.inner.client.try_write().unwrap() = Arc::new(
 			ClientBuilder::new(client).with(HeaderMiddleware).with(ResponseMiddleware).build(),
 		);
 		Ok(())
 	}
+}
 
-	fn user(&self) -> Box<dyn User> {
-		Box::new(GitCodeUser(self.inner.clone()))
+impl Provider for GitCodeClient {
+	type User = GitCodeUser;
+	type Org = GitCodeOrg;
+	type Repo = GitCodeRepo;
+	type Commit = GitCodeCommit;
+	type Issue = GitCodeIssue;
+	type Release = GitCodeRelease;
+
+	fn user(&self) -> GitCodeUser {
+		GitCodeUser(self.inner.clone())
 	}
 
-	fn org(&self) -> Box<dyn Org> {
-		Box::new(GitCodeOrg(self.inner.clone()))
+	fn org(&self) -> GitCodeOrg {
+		GitCodeOrg(self.inner.clone())
 	}
 
-	fn repo(&self) -> Box<dyn Repo> {
-		Box::new(GitCodeRepo(self.inner.clone()))
+	fn repo(&self) -> GitCodeRepo {
+		GitCodeRepo(self.inner.clone())
 	}
 
-	fn commit(&self) -> Box<dyn Commit> {
-		Box::new(GitCodeCommit(self.inner.clone()))
+	fn commit(&self) -> GitCodeCommit {
+		GitCodeCommit(self.inner.clone())
 	}
 
-	fn issue(&self) -> Box<dyn Issue> {
-		Box::new(GitCodeIssue(self.inner.clone()))
+	fn issue(&self) -> GitCodeIssue {
+		GitCodeIssue(self.inner.clone())
 	}
 
-	fn release(&self) -> Box<dyn Release> {
-		Box::new(GitCodeRelease(self.inner.clone()))
+	fn release(&self) -> GitCodeRelease {
+		GitCodeRelease(self.inner.clone())
 	}
 }
 

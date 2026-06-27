@@ -4,7 +4,7 @@ use crate::types::repo::RepoPath;
 use async_trait::async_trait;
 
 #[async_trait]
-pub trait Commit: Send + Sync {
+pub trait Commit {
 	/// 获取仓库提交信息
 	///
 	/// # 参数

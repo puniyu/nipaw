@@ -17,10 +17,8 @@ use crate::{
 	repo::CnbRepo,
 	user::CnbUser,
 };
-use async_trait::async_trait;
 use nipaw_core::types::user::UserInfo;
-pub use nipaw_core::{Client, Commit, Error, Issue, Org, Release, Repo, Result, User};
-use reqwest::Proxy;
+pub use nipaw_core::{Client, Commit, Config, Error, Issue, Org, Provider, Release, Repo, Result, Token, User};
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use serde_json::Value;
 use std::sync::Arc;
@@ -84,8 +82,7 @@ impl CnbClient {
 	}
 }
 
-#[async_trait]
-impl Client for CnbClient {
+impl Token for CnbClient {
 	fn set_token(&mut self, token: &str) -> Result<()> {
 		if token.is_empty() {
 			return Err(Error::TokenEmpty);
@@ -93,37 +90,48 @@ impl Client for CnbClient {
 		Arc::make_mut(&mut self.inner).config.set_token(token);
 		Ok(())
 	}
+}
 
+impl nipaw_core::Proxy for CnbClient {
 	fn set_proxy(&mut self, proxy: &str) -> Result<()> {
-		let client = reqwest::Client::builder().proxy(Proxy::all(proxy)?).build()?;
+		let client = reqwest::Client::builder().proxy(reqwest::Proxy::all(proxy)?).build()?;
 		*self.inner.client.try_write().unwrap() = Arc::new(
 			ClientBuilder::new(client).with(HeaderMiddleware).with(ResponseMiddleware).build(),
 		);
 		Ok(())
 	}
+}
 
-	fn user(&self) -> Box<dyn User> {
-		Box::new(CnbUser(self.inner.clone()))
+impl Provider for CnbClient {
+	type User = CnbUser;
+	type Org = CnbOrg;
+	type Repo = CnbRepo;
+	type Commit = CnbCommit;
+	type Issue = CnbIssue;
+	type Release = CnbRelease;
+
+	fn user(&self) -> CnbUser {
+		CnbUser(self.inner.clone())
 	}
 
-	fn org(&self) -> Box<dyn Org> {
-		Box::new(CnbOrg(self.inner.clone()))
+	fn org(&self) -> CnbOrg {
+		CnbOrg(self.inner.clone())
 	}
 
-	fn repo(&self) -> Box<dyn Repo> {
-		Box::new(CnbRepo(self.inner.clone()))
+	fn repo(&self) -> CnbRepo {
+		CnbRepo(self.inner.clone())
 	}
 
-	fn commit(&self) -> Box<dyn Commit> {
-		Box::new(CnbCommit(self.inner.clone()))
+	fn commit(&self) -> CnbCommit {
+		CnbCommit(self.inner.clone())
 	}
 
-	fn issue(&self) -> Box<dyn Issue> {
-		Box::new(CnbIssue(self.inner.clone()))
+	fn issue(&self) -> CnbIssue {
+		CnbIssue(self.inner.clone())
 	}
 
-	fn release(&self) -> Box<dyn Release> {
-		Box::new(CnbRelease(self.inner.clone()))
+	fn release(&self) -> CnbRelease {
+		CnbRelease(self.inner.clone())
 	}
 }
 

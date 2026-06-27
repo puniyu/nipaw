@@ -1,6 +1,6 @@
 use crate::GitCodeClientInner;
-use crate::common::JsonValue;
 use async_trait::async_trait;
+use crate::common::JsonValue;
 use nipaw_core::option::repo::ListOptions;
 use nipaw_core::types::{
 	repo::RepoInfo,

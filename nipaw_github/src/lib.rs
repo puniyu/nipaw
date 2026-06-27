@@ -1,6 +1,6 @@
 mod commit;
 mod common;
-mod isssue;
+mod issue;
 mod middleware;
 mod org;
 mod release;
@@ -9,16 +9,14 @@ mod user;
 
 use crate::{
 	commit::GitHubCommit,
-	isssue::GitHubIssue,
+	issue::GitHubIssue,
 	middleware::{HeaderMiddleware, ResponseMiddleware},
 	org::GitHubOrg,
 	release::GitHubRelease,
 	repo::GitHubRepo,
 	user::GitHubUser,
 };
-use async_trait::async_trait;
-pub use nipaw_core::{Client, Commit, Error, Issue, Org, Release, Repo, Result, User};
-use reqwest::Proxy;
+pub use nipaw_core::{Client, Commit, Config, Error, Issue, Org, Provider, Release, Repo, Result, Token, User};
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -99,8 +97,7 @@ impl GitHubClient {
 	}
 }
 
-#[async_trait]
-impl Client for GitHubClient {
+impl nipaw_core::Token for GitHubClient {
 	fn set_token(&mut self, token: &str) -> Result<()> {
 		if token.is_empty() {
 			return Err(Error::TokenEmpty);
@@ -108,36 +105,47 @@ impl Client for GitHubClient {
 		Arc::make_mut(&mut self.inner).config.set_token(token);
 		Ok(())
 	}
+}
 
+impl nipaw_core::Proxy for GitHubClient {
 	fn set_proxy(&mut self, proxy: &str) -> Result<()> {
-		let client = reqwest::Client::builder().proxy(Proxy::all(proxy)?).build()?;
+		let client = reqwest::Client::builder().proxy(reqwest::Proxy::all(proxy)?).build()?;
 		*self.inner.client.try_write().unwrap() = Arc::new(
 			ClientBuilder::new(client).with(HeaderMiddleware).with(ResponseMiddleware).build(),
 		);
 		Ok(())
 	}
+}
 
-	fn user(&self) -> Box<dyn User> {
-		Box::new(GitHubUser(self.inner.clone()))
+impl Provider for GitHubClient {
+	type User = GitHubUser;
+	type Org = GitHubOrg;
+	type Repo = GitHubRepo;
+	type Commit = GitHubCommit;
+	type Issue = GitHubIssue;
+	type Release = GitHubRelease;
+
+	fn user(&self) -> GitHubUser {
+		GitHubUser(self.inner.clone())
 	}
 
-	fn org(&self) -> Box<dyn Org> {
-		Box::new(GitHubOrg(self.inner.clone()))
+	fn org(&self) -> GitHubOrg {
+		GitHubOrg(self.inner.clone())
 	}
 
-	fn repo(&self) -> Box<dyn Repo> {
-		Box::new(GitHubRepo(self.inner.clone()))
+	fn repo(&self) -> GitHubRepo {
+		GitHubRepo(self.inner.clone())
 	}
 
-	fn commit(&self) -> Box<dyn Commit> {
-		Box::new(GitHubCommit(self.inner.clone()))
+	fn commit(&self) -> GitHubCommit {
+		GitHubCommit(self.inner.clone())
 	}
 
-	fn issue(&self) -> Box<dyn Issue> {
-		Box::new(GitHubIssue(self.inner.clone()))
+	fn issue(&self) -> GitHubIssue {
+		GitHubIssue(self.inner.clone())
 	}
 
-	fn release(&self) -> Box<dyn Release> {
-		Box::new(GitHubRelease(self.inner.clone()))
+	fn release(&self) -> GitHubRelease {
+		GitHubRelease(self.inner.clone())
 	}
 }

@@ -12,51 +12,40 @@ mod release;
 pub use release::Release;
 
 use crate::Result;
-use async_trait::async_trait;
 
-#[async_trait]
-pub trait Client: Send + Sync {
+/// 访问令牌
+pub trait Token: Send + Sync {
 	/// 设置访问令牌
-	///
-	/// # 参数
-	///
-	/// * `token` - token
-	///
-	/// # 示例
-	///
-	/// ```ignore
-	/// client.set_token("token").unwrap();
-	/// ```
 	fn set_token(&mut self, token: &str) -> Result<()>;
-
-	/// 设置代理
-	///
-	/// # 参数
-	///
-	/// * `proxy` - 代理字符串
-	///
-	/// # 示例
-	///
-	/// ```ignore
-	/// client.set_proxy("http://127.0.0.1:7890").unwrap();
-	/// ```
-	fn set_proxy(&mut self, proxy: &str) -> Result<()>;
-
-	/// 获取用户实例
-	fn user(&self) -> Box<dyn User>;
-
-	/// 获取组织实例
-	fn org(&self) -> Box<dyn Org>;
-
-	/// 获取仓库实例
-	fn repo(&self) -> Box<dyn Repo>;
-
-	/// 获取提交实例
-	fn commit(&self) -> Box<dyn Commit>;
-
-	/// 获取议题实例
-	fn issue(&self) -> Box<dyn Issue>;
-
-	/// 获取release实例
-	fn release(&self) -> Box<dyn Release>;
 }
+
+/// 代理
+pub trait Proxy: Send + Sync {
+	/// 设置代理
+	fn set_proxy(&mut self, proxy: &str) -> Result<()>;
+}
+
+
+pub trait Config: Token + Proxy {}
+
+impl<T> Config for T where T: Token + Proxy {}
+
+pub trait Provider: Send + Sync {
+	type User: User;
+	type Org: Org;
+	type Repo: Repo;
+	type Commit: Commit;
+	type Issue: Issue;
+	type Release: Release;
+
+	fn user(&self) -> Self::User;
+	fn org(&self) -> Self::Org;
+	fn repo(&self) -> Self::Repo;
+	fn commit(&self) -> Self::Commit;
+	fn issue(&self) -> Self::Issue;
+	fn release(&self) -> Self::Release;
+}
+
+pub trait Client: Config + Provider {}
+
+impl<T> Client for T where T: Config + Provider {}

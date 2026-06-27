@@ -1,6 +1,6 @@
 use crate::CnbClientInner;
-use crate::common::JsonValue;
 use async_trait::async_trait;
+use crate::common::JsonValue;
 use nipaw_core::option::repo::ListOptions;
 use nipaw_core::types::{org::OrgInfo, repo::RepoInfo};
 use nipaw_core::{Error, Org, Result};

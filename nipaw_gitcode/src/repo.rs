@@ -1,6 +1,6 @@
 use crate::GitCodeClientInner;
-use crate::common::JsonValue;
 use async_trait::async_trait;
+use crate::common::JsonValue;
 use nipaw_core::types::repo::{CollaboratorPermission, CollaboratorResult, RepoInfo, RepoPath};
 use nipaw_core::{Error, Repo, Result};
 use serde_json::Value;

@@ -1,26 +1,9 @@
-use crate::{
-	common::RT_RUNTIME,
-	error,
-	option::{
-		CommitListOptions, CreateIssueOptions, IssueListOptions, RepoListOptions,
-		UpdateIssueOptions, UpdateReleaseOptions,
-	},
-	types::{
-		commit::{CommitInfo, CommitListInfo},
-		issue::IssueInfo,
-		org::OrgInfo,
-		release::ReleaseInfo,
-		repo::{CollaboratorPermission, CollaboratorResult, RepoInfo, RepoPath},
-		user::{ContributionResult, UserInfo},
-	},
-};
-use napi::tokio::sync::{RwLock, RwLockWriteGuard};
-use napi_derive::napi;
-use nipaw_core::Client;
-use paste::paste;
-use std::sync::LazyLock;
+mod github;
+mod gitcode;
+mod gitee;
+mod cnb;
 
-type Result<T> = std::result::Result<T, error::Error>;
+
 
 macro_rules! impl_client {
 	($client_type:ident, $client:ty) => {
@@ -28,11 +11,90 @@ macro_rules! impl_client {
 			static [<$client_type:upper _CLIENT>]: LazyLock<RwLock<$client>> =
 				LazyLock::new(|| RwLock::new(<$client>::default()));
 
-			async fn [<create_client_ $client_type:lower>]() -> RwLockWriteGuard<'static, $client> {
+			pub(crate) async fn [<create_client_ $client_type:lower>]() -> RwLockWriteGuard<'static, $client> {
 				[<$client_type:upper _CLIENT>].write().await
 			}
 
-			// User 子模块
+			#[derive(Debug, Default)]
+			#[napi(constructor)]
+			pub struct [<$client_type Client>];
+
+			#[napi]
+			impl [<$client_type Client>] {
+				/// 设置访问令牌
+				///
+				/// ## 参数
+				/// - `token` 访问令牌
+				#[napi]
+				pub fn set_token(&self, token: String) -> Result<()> {
+					let rt = $crate::common::RT_RUNTIME.lock().unwrap();
+					rt.block_on(async {
+						let mut client = [<$client_type:upper _CLIENT>].write().await;
+						client.set_token(token.as_str())?;
+						Ok(())
+					})
+				}
+
+				/// 设置代理
+				///
+				/// ## 参数
+				/// - `proxy` 代理地址
+				///
+				/// 支持http,https,socks5协议
+				#[napi]
+				pub fn set_proxy(&self, proxy: String) -> Result<()> {
+					let rt = $crate::common::RT_RUNTIME.lock().unwrap();
+					rt.block_on(async {
+						let mut client = [<$client_type:upper _CLIENT>].write().await;
+						client.set_proxy(proxy.as_str())?;
+						Ok(())
+					})
+				}
+
+				/// 获取用户操作模块
+				#[napi]
+				pub fn user(&self) -> [<$client_type User>] {
+					[<$client_type User>]
+				}
+
+				/// 获取组织操作模块
+				#[napi]
+				pub fn org(&self) -> [<$client_type Org>] {
+					[<$client_type Org>]
+				}
+
+				/// 获取仓库操作模块
+				#[napi]
+				pub fn repo(&self) -> [<$client_type Repo>] {
+					[<$client_type Repo>]
+				}
+
+				/// 获取提交操作模块
+				#[napi]
+				pub fn commit(&self) -> [<$client_type Commit>] {
+					[<$client_type Commit>]
+				}
+
+				/// 获取Issue操作模块
+				#[napi]
+				pub fn issue(&self) -> [<$client_type Issue>] {
+					[<$client_type Issue>]
+				}
+
+				/// 获取Release操作模块
+				#[napi]
+				pub fn release(&self) -> [<$client_type Release>] {
+					[<$client_type Release>]
+				}
+			}
+		}
+	};
+}
+pub(crate) use impl_client;
+
+macro_rules! impl_user {
+	($client_type:ident) => {
+		paste! {
 			#[derive(Debug, Default)]
 			#[napi(constructor)]
 			pub struct [<$client_type User>];
@@ -88,8 +150,14 @@ macro_rules! impl_client {
 					Ok(repo_infos.into_iter().map(|v| v.into()).collect())
 				}
 			}
+		}
+	};
+}
+pub(crate) use impl_user;
 
-			// Org 子模块
+macro_rules! impl_org {
+	($client_type:ident) => {
+		paste! {
 			#[derive(Debug, Default)]
 			#[napi(constructor)]
 			pub struct [<$client_type Org>];
@@ -134,8 +202,14 @@ macro_rules! impl_client {
 					Ok(repo_infos.into_iter().map(|v| v.into()).collect())
 				}
 			}
+		}
+	};
+}
+pub(crate) use impl_org;
 
-			// Repo 子模块
+macro_rules! impl_repo {
+	($client_type:ident) => {
+		paste! {
 			#[derive(Debug, Default)]
 			#[napi(constructor)]
 			pub struct [<$client_type Repo>];
@@ -179,8 +253,14 @@ macro_rules! impl_client {
 					Ok(collaborator_result.into())
 				}
 			}
+		}
+	};
+}
+pub(crate) use impl_repo;
 
-			// Commit 子模块
+macro_rules! impl_commit {
+	($client_type:ident) => {
+		paste! {
 			#[derive(Debug, Default)]
 			#[napi(constructor)]
 			pub struct [<$client_type Commit>];
@@ -221,8 +301,14 @@ macro_rules! impl_client {
 					Ok(commit_infos.into_iter().map(|v| v.into()).collect())
 				}
 			}
+		}
+	};
+}
+pub(crate) use impl_commit;
 
-			// Release 子模块
+macro_rules! impl_release {
+	($client_type:ident) => {
+		paste! {
 			#[derive(Debug, Default)]
 			#[napi(constructor)]
 			pub struct [<$client_type Release>];
@@ -309,8 +395,14 @@ macro_rules! impl_client {
 					Ok(release_info.into())
 				}
 			}
+		}
+	};
+}
+pub(crate) use impl_release;
 
-			// Issue 子模块
+macro_rules! impl_issue {
+	($client_type:ident) => {
+		paste! {
 			#[derive(Debug, Default)]
 			#[napi(constructor)]
 			pub struct [<$client_type Issue>];
@@ -391,98 +483,7 @@ macro_rules! impl_client {
 					Ok(issue_info.into())
 				}
 			}
-
-			// Client 主模块
-			#[derive(Debug, Default)]
-			#[napi(constructor)]
-			pub struct [<$client_type Client>];
-
-			#[napi]
-			impl [<$client_type Client>] {
-				/// 设置访问令牌
-				///
-				/// ## 参数
-				/// - `token` 访问令牌
-				#[napi]
-				pub fn set_token(&self, token: String) -> Result<()> {
-					let rt = RT_RUNTIME.lock().unwrap();
-					rt.block_on(async {
-						let mut client = [<$client_type:upper _CLIENT>].write().await;
-						client.set_token(token.as_str())?;
-						Ok(())
-					})
-				}
-
-				/// 设置代理
-				///
-				/// ## 参数
-				/// - `proxy` 代理地址
-				///
-				/// 支持http,https,socks5协议
-				#[napi]
-				pub fn set_proxy(&self, proxy: String) -> Result<()> {
-					let rt = RT_RUNTIME.lock().unwrap();
-					rt.block_on(async {
-						let mut client = [<$client_type:upper _CLIENT>].write().await;
-						client.set_proxy(proxy.as_str())?;
-						Ok(())
-					})
-				}
-
-				/// 获取用户操作模块
-				#[napi]
-				pub fn user(&self) -> [<$client_type User>] {
-					[<$client_type User>]
-				}
-
-				/// 获取组织操作模块
-				#[napi]
-				pub fn org(&self) -> [<$client_type Org>] {
-					[<$client_type Org>]
-				}
-
-				/// 获取仓库操作模块
-				#[napi]
-				pub fn repo(&self) -> [<$client_type Repo>] {
-					[<$client_type Repo>]
-				}
-
-				/// 获取提交操作模块
-				#[napi]
-				pub fn commit(&self) -> [<$client_type Commit>] {
-					[<$client_type Commit>]
-				}
-
-				/// 获取Issue操作模块
-				#[napi]
-				pub fn issue(&self) -> [<$client_type Issue>] {
-					[<$client_type Issue>]
-				}
-
-				/// 获取Release操作模块
-				#[napi]
-				pub fn release(&self) -> [<$client_type Release>] {
-					[<$client_type Release>]
-				}
-			}
 		}
 	};
 }
-
-impl_client!(Cnb, nipaw_cnb::CnbClient);
-impl_client!(Gitee, nipaw_gitee::GiteeClient);
-impl_client!(Github, nipaw_github::GitHubClient);
-impl_client!(GitCode, nipaw_gitcode::GitCodeClient);
-
-#[napi]
-impl GithubClient {
-	#[napi]
-	/// 设置反向代理
-	///
-	/// ## 参数
-	/// - `url` - 反向代理地址, 反代地址需要同时支持`github.com`和`api.github.com`
-	pub async fn set_reverse_proxy(&self, url: String) {
-		let mut client = create_client_github().await;
-		client.set_reverse_proxy(url.as_str())
-	}
-}
+pub(crate) use impl_issue;
