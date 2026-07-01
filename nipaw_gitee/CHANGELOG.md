@@ -1,5 +1,24 @@
 # 变更日志
 
+## [1.9.7](https://github.com/puniyu/nipaw/compare/gitee-v1.9.6...gitee-v1.9.7) (2026-07-01)
+
+
+### 🔧 其他更新
+
+* **deps:** update rust crates ([1ce9243](https://github.com/puniyu/nipaw/commit/1ce92436569f1d53b96d8c750d6d73fc28377f01))
+
+
+### ♻️ 代码重构
+
+* **nipaw:** 移除async-trait依赖并重构客户端trait实现 ([f5dcba5](https://github.com/puniyu/nipaw/commit/f5dcba59ce21ca096b13a8fa43e3806811d4567f))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * nipaw_core bumped from 1.9.6 to 1.9.7
+
 ## [1.9.6](https://github.com/puniyu/nipaw/compare/gitee-v1.9.5...gitee-v1.9.6) (2026-02-03)
 
 
