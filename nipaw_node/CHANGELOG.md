@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.8](https://github.com/puniyu/nipaw/compare/node-v1.9.7...node-v1.9.8) (2026-07-01)
+
+
+### 🔧 其他更新
+
+* **deps:** update rust crates ([#208](https://github.com/puniyu/nipaw/issues/208)) ([d983ec0](https://github.com/puniyu/nipaw/commit/d983ec0e1975fdc78c52265a587b244cca0db17e))
+
 ## [1.9.7](https://github.com/puniyu/nipaw/compare/node-v1.9.6...node-v1.9.7) (2026-07-01)
 
 
