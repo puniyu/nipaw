@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.9.7](https://github.com/puniyu/nipaw/compare/node-v1.9.6...node-v1.9.7) (2026-07-01)
+
+
+### 🔧 其他更新
+
+* **deps:** update dependency @napi-rs/cli to v3.7.0 ([#170](https://github.com/puniyu/nipaw/issues/170)) ([eca1a30](https://github.com/puniyu/nipaw/commit/eca1a30e7ff2614e6a40e7f98b032f44b39b0ec8))
+* **deps:** update node packages to v3.7.1 ([#188](https://github.com/puniyu/nipaw/issues/188)) ([6bae1ac](https://github.com/puniyu/nipaw/commit/6bae1ac35164219e12b4b13d46e4d2161059fa76))
+* **deps:** update node packages to v3.7.2 ([#190](https://github.com/puniyu/nipaw/issues/190)) ([456cc14](https://github.com/puniyu/nipaw/commit/456cc14c9c628c28b352f16ceeb5b4178c4a0a94))
+* **deps:** update rust crates ([1ce9243](https://github.com/puniyu/nipaw/commit/1ce92436569f1d53b96d8c750d6d73fc28377f01))
+* **deps:** update rust crates ([#201](https://github.com/puniyu/nipaw/issues/201)) ([b00c318](https://github.com/puniyu/nipaw/commit/b00c318e262f632bbb8391433682adf84803d188))
+* **deps:** update rust crates to v3.9.3 ([#194](https://github.com/puniyu/nipaw/issues/194)) ([3d1da01](https://github.com/puniyu/nipaw/commit/3d1da012fdacf6db8c397c78feb304836c075f93))
+
+
+### ♻️ 代码重构
+
+* **nipaw:** 移除async-trait依赖并重构客户端trait实现 ([f5dcba5](https://github.com/puniyu/nipaw/commit/f5dcba59ce21ca096b13a8fa43e3806811d4567f))
+
 ## [1.9.6](https://github.com/puniyu/nipaw/compare/node-v1.9.5...node-v1.9.6) (2026-02-03)
 
 

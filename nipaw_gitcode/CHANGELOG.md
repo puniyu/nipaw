@@ -1,5 +1,19 @@
 # 变更日志
 
+## [1.9.7](https://github.com/puniyu/nipaw/compare/gitcode-v1.9.6...gitcode-v1.9.7) (2026-07-01)
+
+
+### ♻️ 代码重构
+
+* **nipaw:** 移除async-trait依赖并重构客户端trait实现 ([f5dcba5](https://github.com/puniyu/nipaw/commit/f5dcba59ce21ca096b13a8fa43e3806811d4567f))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * nipaw_core bumped from 1.9.6 to 1.9.7
+
 ## [1.9.6](https://github.com/puniyu/nipaw/compare/gitcode-v1.9.5...gitcode-v1.9.6) (2026-02-03)
 
 
