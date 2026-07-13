@@ -15,7 +15,7 @@ publish = false
 crate-type = ["cdylib"]
 
 [dependencies]
-napi = { version = "=3.10.4", features = ["chrono_date", "async"] }
+napi = { version = "=3.10.5", features = ["chrono_date", "async"] }
 napi-derive = "=3.5.10"
 serde.workspace = true
 chrono.workspace = true
