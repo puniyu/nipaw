@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.9.8](https://github.com/puniyu/nipaw/compare/node-v1.9.7...node-v1.9.8) (2026-07-23)
+
+
+### 🔧 其他更新
+
+* **deps:** update dependency @napi-rs/cli to v3.7.3 ([#222](https://github.com/puniyu/nipaw/issues/222)) ([9d170ee](https://github.com/puniyu/nipaw/commit/9d170eeef52c3a48a01ad112cc8e48d7eee594c7))
+* **deps:** update dependency @napi-rs/cli to v3.7.4 ([#232](https://github.com/puniyu/nipaw/issues/232)) ([5140807](https://github.com/puniyu/nipaw/commit/514080753991b2a1a87c19516f6ae2f8a3802e87))
+* **deps:** update rust crate napi to v3.10.2 ([#212](https://github.com/puniyu/nipaw/issues/212)) ([b91d49c](https://github.com/puniyu/nipaw/commit/b91d49cf14f0ed2a7453b34fd481b4447152a93e))
+* **deps:** update rust crate napi to v3.10.3 ([#213](https://github.com/puniyu/nipaw/issues/213)) ([72c1b89](https://github.com/puniyu/nipaw/commit/72c1b89b1d1a3ba1cc827ab840a402d81697eefa))
+* **deps:** update rust crate napi to v3.10.5 ([#224](https://github.com/puniyu/nipaw/issues/224)) ([7bca537](https://github.com/puniyu/nipaw/commit/7bca537062632a2dbe6b790c7af4c17cdec0ae77))
+* **deps:** update rust crates ([#208](https://github.com/puniyu/nipaw/issues/208)) ([d983ec0](https://github.com/puniyu/nipaw/commit/d983ec0e1975fdc78c52265a587b244cca0db17e))
+* **deps:** update rust crates ([#210](https://github.com/puniyu/nipaw/issues/210)) ([31540eb](https://github.com/puniyu/nipaw/commit/31540eb5e28e32c590998e41cbca00bcb376aa8b))
+* **deps:** update rust crates ([#223](https://github.com/puniyu/nipaw/issues/223)) ([870de2c](https://github.com/puniyu/nipaw/commit/870de2cecd0eb33661cf8d13bd557bc812859e94))
+
 ## [1.9.7](https://github.com/puniyu/nipaw/compare/node-v1.9.6...node-v1.9.7) (2026-07-01)
 
 
