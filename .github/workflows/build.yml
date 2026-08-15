@@ -21,7 +21,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: 设置 rust
-        uses: puniyu/setup-rust@23eaae5b458d3dcd65f1a7d22bf84c74b9abfd73 # main
+        uses: puniyu/setup-rust@1fc4e1b28bea238f8309a8f7f03272f530c5853e # main
         with:
           target: ${{ matrix.platform.target }}
           save-cache: true
@@ -62,7 +62,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: 设置 rust
-        uses: puniyu/setup-rust@23eaae5b458d3dcd65f1a7d22bf84c74b9abfd73 # main
+        uses: puniyu/setup-rust@1fc4e1b28bea238f8309a8f7f03272f530c5853e # main
         with:
           target: ${{ matrix.platform.target }}
           save-cache: true
@@ -106,7 +106,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: 设置 rust
-        uses: puniyu/setup-rust@23eaae5b458d3dcd65f1a7d22bf84c74b9abfd73 # main
+        uses: puniyu/setup-rust@1fc4e1b28bea238f8309a8f7f03272f530c5853e # main
         with:
           target: ${{ matrix.platform.target }}
           save-cache: true
