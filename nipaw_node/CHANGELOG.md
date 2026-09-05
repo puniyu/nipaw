@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.9.8](https://github.com/puniyu/nipaw/compare/node-v1.9.7...node-v1.9.8) (2026-09-05)
+
+
+### 🔧 其他更新
+
+* **deps:** update dependency @napi-rs/cli to v3.7.4 ([#232](https://github.com/puniyu/nipaw/issues/232)) ([5140807](https://github.com/puniyu/nipaw/commit/514080753991b2a1a87c19516f6ae2f8a3802e87))
+* **deps:** update dependency @napi-rs/cli to v3.8.0 ([#237](https://github.com/puniyu/nipaw/issues/237)) ([3bd0754](https://github.com/puniyu/nipaw/commit/3bd07549cad7f757dd1416986dc0f8d9c72a7e2f))
+* **deps:** update dependency @napi-rs/cli to v3.8.1 ([#240](https://github.com/puniyu/nipaw/issues/240)) ([6cb5ade](https://github.com/puniyu/nipaw/commit/6cb5ade795ef32e94de8d79f4afe0123d4c88490))
+* **deps:** update dependency @napi-rs/cli to v3.8.2 ([#242](https://github.com/puniyu/nipaw/issues/242)) ([45ba5d8](https://github.com/puniyu/nipaw/commit/45ba5d86d6858df0f2c449fac2c452d7acf1267d))
+* **deps:** update dependency @napi-rs/cli to v3.8.3 ([#252](https://github.com/puniyu/nipaw/issues/252)) ([c416496](https://github.com/puniyu/nipaw/commit/c416496b6ecfb7f8a4c3cea803df9eb49f5e971a))
+* **deps:** update dependency @napi-rs/cli to v3.8.4 ([#253](https://github.com/puniyu/nipaw/issues/253)) ([aee80e4](https://github.com/puniyu/nipaw/commit/aee80e4f45edf356d3a152a49bd29f3cf46b9863))
+* **deps:** update dependency @napi-rs/cli to v3.8.5 ([#254](https://github.com/puniyu/nipaw/issues/254)) ([2c7618c](https://github.com/puniyu/nipaw/commit/2c7618cfab48a691c5d6252ba6cca97801af8a0f))
+* **deps:** update dependency @napi-rs/cli to v3.8.6 ([#255](https://github.com/puniyu/nipaw/issues/255)) ([86fe2bb](https://github.com/puniyu/nipaw/commit/86fe2bb9f198070e6621d825237c3df0d8efef72))
+* **deps:** update dependency @napi-rs/cli to v3.9.0 ([#271](https://github.com/puniyu/nipaw/issues/271)) ([e3ea14a](https://github.com/puniyu/nipaw/commit/e3ea14ae7c5df21408f7067b1bda89612b7a0bf7))
+
 ## [1.9.7](https://github.com/puniyu/nipaw/compare/node-v1.9.6...node-v1.9.7) (2026-07-01)
 
 
