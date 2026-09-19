@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.9.8](https://github.com/puniyu/nipaw/compare/node-v1.9.7...node-v1.9.8) (2026-09-19)
+
+
+### 🔧 其他更新
+
+* **deps:** update dependency @napi-rs/cli to v3.10.0 ([#287](https://github.com/puniyu/nipaw/issues/287)) ([da95e9b](https://github.com/puniyu/nipaw/commit/da95e9ba89160e161d42977c391fab78b7d14a77))
+* **deps:** update dependency @napi-rs/cli to v3.10.3 ([#288](https://github.com/puniyu/nipaw/issues/288)) ([76728c3](https://github.com/puniyu/nipaw/commit/76728c3565cb38300ab5602ac82c183419e93ad1))
+* **deps:** update dependency @napi-rs/cli to v3.10.4 ([#289](https://github.com/puniyu/nipaw/issues/289)) ([60d19f0](https://github.com/puniyu/nipaw/commit/60d19f0a5885f024cf0c9391ebe77b594436c63a))
+* **deps:** update dependency @napi-rs/cli to v3.8.2 ([#242](https://github.com/puniyu/nipaw/issues/242)) ([45ba5d8](https://github.com/puniyu/nipaw/commit/45ba5d86d6858df0f2c449fac2c452d7acf1267d))
+* **deps:** update dependency @napi-rs/cli to v3.8.3 ([#252](https://github.com/puniyu/nipaw/issues/252)) ([c416496](https://github.com/puniyu/nipaw/commit/c416496b6ecfb7f8a4c3cea803df9eb49f5e971a))
+* **deps:** update dependency @napi-rs/cli to v3.8.4 ([#253](https://github.com/puniyu/nipaw/issues/253)) ([aee80e4](https://github.com/puniyu/nipaw/commit/aee80e4f45edf356d3a152a49bd29f3cf46b9863))
+* **deps:** update dependency @napi-rs/cli to v3.8.5 ([#254](https://github.com/puniyu/nipaw/issues/254)) ([2c7618c](https://github.com/puniyu/nipaw/commit/2c7618cfab48a691c5d6252ba6cca97801af8a0f))
+* **deps:** update dependency @napi-rs/cli to v3.8.6 ([#255](https://github.com/puniyu/nipaw/issues/255)) ([86fe2bb](https://github.com/puniyu/nipaw/commit/86fe2bb9f198070e6621d825237c3df0d8efef72))
+* **deps:** update dependency @napi-rs/cli to v3.9.0 ([#271](https://github.com/puniyu/nipaw/issues/271)) ([e3ea14a](https://github.com/puniyu/nipaw/commit/e3ea14ae7c5df21408f7067b1bda89612b7a0bf7))
+* **deps:** update dependency @napi-rs/cli to v3.9.1 ([#281](https://github.com/puniyu/nipaw/issues/281)) ([03186ba](https://github.com/puniyu/nipaw/commit/03186ba5a81c8c955339d8ad8dafba8020ff36dd))
+
 ## [1.9.7](https://github.com/puniyu/nipaw/compare/node-v1.9.6...node-v1.9.7) (2026-07-01)
 
 
