@@ -21,7 +21,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: 设置 rust
-        uses: puniyu/setup-rust@a4b19b833bdb71c12bd91bd1b0154950e790bb65 # main
+        uses: puniyu/setup-rust@150511780e77220bc677004128deedcdccde1097 # main
         with:
           target: ${{ matrix.platform.target }}
           save-cache: true
@@ -39,7 +39,7 @@ jobs:
         working-directory: nipaw_node
 
       - name: 上传构建产物
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: "${{ env.APP_NAME }}-node-${{ matrix.platform.label }}"
           path: |
@@ -62,7 +62,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: 设置 rust
-        uses: puniyu/setup-rust@a4b19b833bdb71c12bd91bd1b0154950e790bb65 # main
+        uses: puniyu/setup-rust@150511780e77220bc677004128deedcdccde1097 # main
         with:
           target: ${{ matrix.platform.target }}
           save-cache: true
@@ -80,7 +80,7 @@ jobs:
         working-directory: nipaw_node
 
       - name: 上传构建产物
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: "${{ env.APP_NAME }}-node-${{ matrix.platform.label }}"
           path: |
@@ -106,7 +106,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: 设置 rust
-        uses: puniyu/setup-rust@a4b19b833bdb71c12bd91bd1b0154950e790bb65 # main
+        uses: puniyu/setup-rust@150511780e77220bc677004128deedcdccde1097 # main
         with:
           target: ${{ matrix.platform.target }}
           save-cache: true
@@ -124,7 +124,7 @@ jobs:
         working-directory: nipaw_node
 
       - name: 上传构建产物
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: "${{ env.APP_NAME }}-node-${{ matrix.platform.label }}"
           path: |
@@ -133,7 +133,7 @@ jobs:
 
       - name: 上传npm包
         if: matrix.platform.label == 'linux-x86_64'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: "npm-package"
           path: |
