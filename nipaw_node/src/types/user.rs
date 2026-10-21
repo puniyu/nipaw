@@ -1,4 +1,3 @@
-use chrono::{DateTime, Utc};
 use napi_derive::napi;
 use serde::{Deserialize, Serialize};
 
@@ -21,8 +20,8 @@ pub struct UserInfo {
 	pub public_repo_count: u32,
 }
 
-impl From<nipaw_core::types::user::UserInfo> for UserInfo {
-	fn from(user_info: nipaw_core::types::user::UserInfo) -> Self {
+impl From<nipaw_core::user::UserInfo> for UserInfo {
+	fn from(user_info: nipaw_core::user::UserInfo) -> Self {
 		Self {
 			login: user_info.login,
 			name: user_info.name,
@@ -37,41 +36,38 @@ impl From<nipaw_core::types::user::UserInfo> for UserInfo {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[napi(object)]
-pub struct ContributionData {
-	/// 日期
-	pub date: DateTime<Utc>,
-
-	/// 当日的贡献次数
+pub struct ContributionDay {
+	pub date: String,
 	pub count: u32,
 }
 
-impl From<nipaw_core::types::user::ContributionData> for ContributionData {
-	fn from(value: nipaw_core::types::user::ContributionData) -> Self {
-		ContributionData { date: value.date, count: value.count }
+impl From<nipaw_core::user::ContributionDay> for ContributionDay {
+	fn from(value: nipaw_core::user::ContributionDay) -> Self {
+		Self { date: value.date.to_string(), count: value.count }
 	}
 }
 
-/// 整体贡献统计结果，包含总数与按周组织的贡献数据
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[napi(object)]
-pub struct ContributionResult {
-	/// 总贡献次数
-	pub total: u32,
-
-	/// 二维数组结构的贡献数据
-	/// 第一维通常表示周数，第二维表示每周的贡献数据
-	pub contributions: Vec<Vec<ContributionData>>,
+pub struct ContributionWeek {
+	pub days: Vec<ContributionDay>,
 }
 
-impl From<nipaw_core::types::user::ContributionResult> for ContributionResult {
-	fn from(value: nipaw_core::types::user::ContributionResult) -> Self {
-		ContributionResult {
-			total: value.total,
-			contributions: value
-				.contributions
-				.into_iter()
-				.map(|week| week.into_iter().map(Into::into).collect())
-				.collect(),
-		}
+impl From<nipaw_core::user::ContributionWeek> for ContributionWeek {
+	fn from(value: nipaw_core::user::ContributionWeek) -> Self {
+		Self { days: value.days.into_iter().map(Into::into).collect() }
+	}
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[napi(object)]
+pub struct ContributionCalendar {
+	pub total: u32,
+	pub weeks: Vec<ContributionWeek>,
+}
+
+impl From<nipaw_core::user::ContributionCalendar> for ContributionCalendar {
+	fn from(value: nipaw_core::user::ContributionCalendar) -> Self {
+		Self { total: value.total, weeks: value.weeks.into_iter().map(Into::into).collect() }
 	}
 }

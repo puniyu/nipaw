@@ -18,9 +18,9 @@ pub struct CommitListOptions {
 	/// 筛选到此时间结束
 	pub until: Option<DateTime<Utc>>,
 }
-impl From<CommitListOptions> for nipaw_core::option::commit::ListOptions {
+impl From<CommitListOptions> for nipaw_core::option::commit::CommitListOptions {
 	fn from(value: CommitListOptions) -> Self {
-		nipaw_core::option::commit::ListOptions {
+		nipaw_core::option::commit::CommitListOptions {
 			per_page: value.per_page,
 			page: value.page,
 			sha: value.sha,

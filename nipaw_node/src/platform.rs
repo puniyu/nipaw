@@ -11,8 +11,8 @@ macro_rules! impl_client {
 			static [<$client_type:upper _CLIENT>]: LazyLock<RwLock<$client>> =
 				LazyLock::new(|| RwLock::new(<$client>::default()));
 
-			pub(crate) async fn [<create_client_ $client_type:lower>]() -> RwLockWriteGuard<'static, $client> {
-				[<$client_type:upper _CLIENT>].write().await
+			pub(crate) async fn [<create_client_ $client_type:lower>]() -> RwLockReadGuard<'static, $client> {
+				[<$client_type:upper _CLIENT>].read().await
 			}
 
 			#[derive(Debug, Default)]
@@ -29,7 +29,7 @@ macro_rules! impl_client {
 				pub fn set_token(&self, token: String) -> Result<()> {
 					let rt = $crate::common::RT_RUNTIME.lock().unwrap();
 					rt.block_on(async {
-						let mut client = [<$client_type:upper _CLIENT>].write().await;
+						let client = [<$client_type:upper _CLIENT>].read().await;
 						client.set_token(token.as_str())?;
 						Ok(())
 					})
@@ -45,7 +45,7 @@ macro_rules! impl_client {
 				pub fn set_proxy(&self, proxy: String) -> Result<()> {
 					let rt = $crate::common::RT_RUNTIME.lock().unwrap();
 					rt.block_on(async {
-						let mut client = [<$client_type:upper _CLIENT>].write().await;
+						let client = [<$client_type:upper _CLIENT>].read().await;
 						client.set_proxy(proxy.as_str())?;
 						Ok(())
 					})
@@ -128,7 +128,7 @@ macro_rules! impl_user {
 				/// ## 参数
 				/// - `user_name` 用户名称, 为空时获取当前登录用户贡献信息
 				#[napi]
-				pub async fn contribution(&self, user_name: Option<String>) -> Result<ContributionResult> {
+				pub async fn contribution(&self, user_name: Option<String>) -> Result<ContributionCalendar> {
 					let client = [<create_client_ $client_type:lower>]().await;
 					let contribution = client.user().contribution(user_name.as_deref()).await?;
 					Ok(contribution.into())

@@ -1,20 +1,38 @@
-use crate::GitHubClientInner;
+use super::format_datetime;
+use crate::GitHubState;
+use crate::Json;
+use crate::Result;
 use async_trait::async_trait;
-use crate::common::JsonValue;
-use nipaw_core::option::commit::ListOptions;
-use nipaw_core::types::commit::{CommitInfo, CommitListInfo};
-use nipaw_core::types::repo::RepoPath;
-use nipaw_core::{Commit, Result};
+use nipaw_core::{
+	Commit,
+	commit::{
+		CommitData, CommitInfo, CommitListInfo, CommitListOptions, FileInfo, FileStatus,
+		GitUserInfo, StatsInfo,
+	},
+	repo::RepoPath,
+};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-pub struct GitHubCommit(pub(crate) Arc<GitHubClientInner>);
+type State = Arc<GitHubState>;
+
+#[derive(Debug, Clone)]
+pub struct GitHubCommit(State);
+
+impl GitHubCommit {
+	pub(crate) fn new(state: impl Into<State>) -> Self {
+		Self(state.into())
+	}
+}
 
 #[async_trait]
 impl Commit for GitHubCommit {
+	type Err = crate::Error;
+
 	async fn info(&self, repo_path: RepoPath, sha: Option<&str>) -> Result<CommitInfo> {
-		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
+		let config = self.0.config();
+		let (token, api_url) = (&config.token, &config.api_url);
 		let url = format!(
 			"{}/repos/{}/{}/commits/{}",
 			api_url,
@@ -22,56 +40,24 @@ impl Commit for GitHubCommit {
 			repo_path.repo,
 			sha.unwrap_or("HEAD")
 		);
-		let client = self.0.client.read().await;
+		let client = self.0.http();
 		let mut request = client.get(url);
 		if let Some(token) = token {
 			request = request.bearer_auth(token);
 		}
-		let mut res = request.send().await?.json::<JsonValue>().await?;
-		let author_avatar_url = res
-			.0
-			.get("author")
-			.and_then(|v| v.get("avatar_url"))
-			.and_then(|v| v.as_str())
-			.unwrap()
-			.to_string();
-		let committer_avatar_url = res
-			.0
-			.get("committer")
-			.and_then(|v| v.get("avatar_url"))
-			.and_then(|v| v.as_str())
-			.unwrap()
-			.to_string();
-		if let Some(author_obj) = res
-			.0
-			.get_mut("commit")
-			.and_then(|commit| commit.as_object_mut())
-			.and_then(|commit_obj| commit_obj.get_mut("author"))
-			.and_then(|author| author.as_object_mut())
-		{
-			author_obj.insert("avatar_url".to_string(), Value::String(author_avatar_url));
-		}
-
-		if let Some(committer_obj) = res
-			.0
-			.get_mut("commit")
-			.and_then(|commit| commit.as_object_mut())
-			.and_then(|commit_obj| commit_obj.get_mut("committer"))
-			.and_then(|committer| committer.as_object_mut())
-		{
-			committer_obj.insert("avatar_url".to_string(), Value::String(committer_avatar_url));
-		}
+		let res = request.send().await?.json::<Json>().await?;
 		Ok(res.into())
 	}
 
 	async fn list(
 		&self,
 		repo_path: RepoPath,
-		option: Option<ListOptions>,
+		option: Option<CommitListOptions>,
 	) -> Result<Vec<CommitListInfo>> {
-		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
+		let config = self.0.config();
+		let (token, api_url) = (&config.token, &config.api_url);
 		let url = format!("{}/repos/{}/{}/commits", api_url, repo_path.owner, repo_path.repo);
-		let client = self.0.client.read().await;
+		let client = self.0.http();
 		let mut request = client.get(url);
 		let mut params: HashMap<&str, String> = HashMap::new();
 		if let Some(token) = token {
@@ -90,14 +76,110 @@ impl Commit for GitHubCommit {
 				params.insert("author", author.to_string());
 			}
 			if let Some(since) = option.since {
-				params.insert("since", since.to_rfc3339());
+				params.insert("since", format_datetime(since));
 			}
 			if let Some(until) = option.until {
-				params.insert("until", until.to_rfc3339());
+				params.insert("until", format_datetime(until));
 			}
 		}
-		let resp = request.query(&params).send().await?;
-		let commit_infos: Vec<JsonValue> = resp.json().await?;
-		Ok(commit_infos.into_iter().map(|v| v.into()).collect())
+		request = request.query(&params);
+		let res = request.send().await?.json::<Vec<Json>>().await?;
+		Ok(res.into_iter().map(Into::into).collect())
+	}
+}
+
+impl From<Json<'_>> for CommitInfo {
+	fn from(value: Json<'_>) -> Self {
+		let commit_info = value.as_inner();
+		let commit_value = commit_info.get("commit").unwrap();
+		let stats_value = commit_info.get("stats").unwrap();
+		Self {
+			sha: commit_info.get("sha").and_then(|v| v.as_str()).unwrap().to_string(),
+			commit: Json::new(commit_value).into(),
+			stats: Json::new(stats_value).into(),
+			files: commit_info
+				.get("files")
+				.and_then(|s| s.as_array())
+				.map(|arr| arr.iter().map(|v| Json::new(v).into()).collect())
+				.unwrap(),
+		}
+	}
+}
+
+impl From<Json<'_>> for CommitListInfo {
+	fn from(value: Json<'_>) -> Self {
+		let commit_info = value.as_inner();
+		let commit_value = commit_info.get("commit").unwrap();
+		Self {
+			sha: commit_info.get("sha").and_then(|v| v.as_str()).unwrap().to_string(),
+			commit: Json::new(commit_value).into(),
+		}
+	}
+}
+
+impl From<Json<'_>> for CommitData {
+	fn from(value: Json<'_>) -> Self {
+		let commit_data = value.as_inner();
+		let author_value = commit_data.get("author").unwrap();
+		let committer_value = commit_data.get("committer").unwrap();
+		Self {
+			author: Json::new(author_value).into(),
+			committer: Json::new(committer_value).into(),
+			message: commit_data.get("message").and_then(|v| v.as_str()).unwrap().to_string(),
+		}
+	}
+}
+
+impl From<Json<'_>> for GitUserInfo {
+	fn from(value: Json<'_>) -> Self {
+		let user_info = value.as_inner();
+		Self {
+			name: user_info.get("name").and_then(|v| v.as_str()).unwrap().to_string(),
+			email: user_info
+				.get("email")
+				.and_then(|v| v.as_str())
+				.filter(|s| !s.is_empty())
+				.map(|s| s.to_string()),
+			avatar_url: user_info.get("avatar_url").and_then(|v| v.as_str()).unwrap().to_string(),
+			date: user_info.get("date").and_then(Value::as_str).map(super::parse_datetime).unwrap(),
+		}
+	}
+}
+
+impl From<Json<'_>> for StatsInfo {
+	fn from(value: Json<'_>) -> Self {
+		let stats_info = value.as_inner();
+		Self {
+			total: stats_info.get("total").and_then(|v| v.as_u64()).unwrap_or(0),
+			additions: stats_info.get("additions").and_then(|v| v.as_u64()).unwrap_or(0),
+			deletions: stats_info.get("deletions").and_then(|v| v.as_u64()).unwrap_or(0),
+		}
+	}
+}
+
+impl From<Json<'_>> for FileInfo {
+	fn from(value: Json<'_>) -> Self {
+		let file_info = value.as_inner();
+		Self {
+			file_name: file_info.get("filename").and_then(|v| v.as_str()).unwrap().to_string(),
+			status: Json::new(file_info.get("status").unwrap()).into(),
+			additions: file_info.get("additions").and_then(|v| v.as_u64()).unwrap_or(0),
+			deletions: file_info.get("deletions").and_then(|v| v.as_u64()).unwrap_or(0),
+			changes: file_info.get("changes").and_then(|v| v.as_u64()).unwrap_or(0),
+		}
+	}
+}
+
+impl From<Json<'_>> for FileStatus {
+	fn from(value: Json<'_>) -> Self {
+		match value.as_inner().as_str().map(|s| s.to_lowercase()).as_deref() {
+			Some("added") => Self::Added,
+			Some("modified") => Self::Modified,
+			Some("removed") => Self::Deleted,
+			Some("renamed") => Self::Renamed,
+			Some("copied") => Self::Copied,
+			Some("changed") => Self::Changed,
+			_ => Self::UnChanged,
+		}
 	}
 }

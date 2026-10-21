@@ -1,123 +1,134 @@
 mod commit;
-mod common;
+#[doc(inline)]
+pub use commit::GitHubCommit;
+mod config;
+#[doc(inline)]
+pub use config::Config;
+mod error;
+#[doc(inline)]
+pub use error::{Error, Result};
 mod issue;
+#[doc(inline)]
+pub use issue::GitHubIssue;
 mod middleware;
 mod org;
+#[doc(inline)]
+pub use org::GitHubOrg;
 mod release;
+#[doc(inline)]
+pub use release::GitHubRelease;
 mod repo;
+#[doc(inline)]
+pub use repo::GitHubRepo;
 mod user;
+#[doc(inline)]
+pub use user::GitHubUser;
+mod json;
+pub(crate) use json::Json;
+mod time;
+pub(crate) use time::{format_datetime, parse_datetime};
+mod html;
+pub(crate) use html::Html;
 
-use crate::{
-	commit::GitHubCommit,
-	issue::GitHubIssue,
-	middleware::{HeaderMiddleware, ResponseMiddleware},
-	org::GitHubOrg,
-	release::GitHubRelease,
-	repo::GitHubRepo,
-	user::GitHubUser,
-};
-pub use nipaw_core::{Client, Commit, Config, Error, Issue, Org, Provider, Release, Repo, Result, Token, User};
+use nipaw_core::Provider;
+use parking_lot::RwLock;
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use std::sync::Arc;
-use tokio::sync::RwLock;
 
-#[derive(Debug, Clone)]
-pub(crate) struct GitHubConfig {
-	pub(crate) token: Option<String>,
-	pub(crate) api_url: String,
-	pub(crate) base_url: String,
+#[derive(Debug)]
+pub(crate) struct GitHubState {
+	pub(crate) config: RwLock<Arc<Config>>,
+	pub(crate) http: RwLock<Arc<ClientWithMiddleware>>,
 }
 
-#[derive(Debug, Clone)]
-pub(crate) struct GitHubClientInner {
-	pub(crate) config: GitHubConfig,
-	pub(crate) client: Arc<RwLock<Arc<ClientWithMiddleware>>>,
-}
-
-impl Default for GitHubConfig {
-	fn default() -> Self {
-		Self {
-			token: None,
-			base_url: "https://github.com".to_string(),
-			api_url: "https://api.github.com".to_string(),
-		}
-	}
-}
-
-impl GitHubConfig {
-	/// 设置访问令牌
-	pub fn set_token(&mut self, token: &str) {
-		self.token = Some(token.to_string());
-	}
-	/// 设置 GitHub API 的 URL
-	pub fn set_api_url(&mut self, api_url: String) {
-		self.api_url = api_url;
+impl GitHubState {
+	pub fn config(&self) -> Arc<Config> {
+		Arc::clone(&self.config.read())
 	}
 
-	/// 设置 GitHub 基础 URL
-	pub fn set_base_url(&mut self, base_url: String) {
-		self.base_url = base_url;
+	pub fn http(&self) -> Arc<ClientWithMiddleware> {
+		Arc::clone(&self.http.read())
 	}
 }
 
 #[derive(Debug, Clone)]
 pub struct GitHubClient {
-	pub(crate) inner: Arc<GitHubClientInner>,
+	pub(crate) state: Arc<GitHubState>,
+	user: GitHubUser,
+	org: GitHubOrg,
+	repo: GitHubRepo,
+	commit: GitHubCommit,
+	issue: GitHubIssue,
+	release: GitHubRelease,
 }
 
 impl Default for GitHubClient {
 	fn default() -> Self {
-		let client = reqwest::Client::new();
+		let state = Arc::new(GitHubState {
+			config: RwLock::new(Arc::new(Config::default())),
+			http: RwLock::new(Arc::new(
+				ClientBuilder::new(reqwest::Client::new())
+					.with(middleware::HeaderMiddleware)
+					.with(middleware::ResponseMiddleware)
+					.build(),
+			)),
+		});
 		Self {
-			inner: Arc::new(GitHubClientInner {
-				config: GitHubConfig::default(),
-				client: Arc::new(RwLock::new(Arc::new(
-					ClientBuilder::new(client)
-						.with(HeaderMiddleware)
-						.with(ResponseMiddleware)
-						.build(),
-				))),
-			}),
+			user: GitHubUser::new(state.clone()),
+			org: GitHubOrg::new(state.clone()),
+			repo: GitHubRepo::new(state.clone()),
+			commit: GitHubCommit::new(state.clone()),
+			issue: GitHubIssue::new(state.clone()),
+			release: GitHubRelease::new(state.clone()),
+			state,
 		}
 	}
 }
+
 impl GitHubClient {
 	pub fn new() -> Self {
 		Self::default()
 	}
 
-	/// 设置反向代理
-	pub fn set_reverse_proxy(&mut self, url: &str) {
-		let clean_url = url.trim_end_matches('/');
-		let inner = Arc::make_mut(&mut self.inner);
-		let api_url = format!("{}/{}", clean_url, inner.config.api_url);
-		let base_url = format!("{}/{}", clean_url, inner.config.base_url);
-		inner.config.set_api_url(api_url);
-		inner.config.set_base_url(base_url);
-	}
-}
-
-impl nipaw_core::Token for GitHubClient {
-	fn set_token(&mut self, token: &str) -> Result<()> {
+	/// 设置访问令牌
+	pub fn set_token(&self, token: &str) -> Result<()> {
 		if token.is_empty() {
 			return Err(Error::TokenEmpty);
 		}
-		Arc::make_mut(&mut self.inner).config.set_token(token);
+		let mut guard = self.state.config.write();
+		Arc::make_mut(&mut *guard).set_token(token);
 		Ok(())
 	}
-}
 
-impl nipaw_core::Proxy for GitHubClient {
-	fn set_proxy(&mut self, proxy: &str) -> Result<()> {
+	/// 设置代理
+	pub fn set_proxy(&self, proxy: &str) -> Result<()> {
 		let client = reqwest::Client::builder().proxy(reqwest::Proxy::all(proxy)?).build()?;
-		*self.inner.client.try_write().unwrap() = Arc::new(
-			ClientBuilder::new(client).with(HeaderMiddleware).with(ResponseMiddleware).build(),
+		let client = Arc::new(
+			ClientBuilder::new(client)
+				.with(middleware::HeaderMiddleware)
+				.with(middleware::ResponseMiddleware)
+				.build(),
 		);
+		*self.state.http.write() = client;
 		Ok(())
+	}
+
+	/// 设置反向代理
+	pub fn set_reverse_proxy(&self, url: &str) {
+		let clean_url = url.trim_end_matches('/');
+		let mut guard = self.state.config.write();
+		let config = Arc::make_mut(&mut *guard);
+		let base_url = format!("{}/{}", clean_url, config.base_url);
+		let web_url = format!("{}/{}", clean_url, config.web_url);
+		let api_url = format!("{}/{}", clean_url, config.api_url);
+		config.set_base_url(base_url);
+		config.set_web_url(web_url);
+		config.set_api_url(api_url);
 	}
 }
 
 impl Provider for GitHubClient {
+	type Err = Error;
 	type User = GitHubUser;
 	type Org = GitHubOrg;
 	type Repo = GitHubRepo;
@@ -125,27 +136,27 @@ impl Provider for GitHubClient {
 	type Issue = GitHubIssue;
 	type Release = GitHubRelease;
 
-	fn user(&self) -> GitHubUser {
-		GitHubUser(self.inner.clone())
+	fn user(&self) -> &GitHubUser {
+		&self.user
 	}
 
-	fn org(&self) -> GitHubOrg {
-		GitHubOrg(self.inner.clone())
+	fn org(&self) -> &GitHubOrg {
+		&self.org
 	}
 
-	fn repo(&self) -> GitHubRepo {
-		GitHubRepo(self.inner.clone())
+	fn repo(&self) -> &GitHubRepo {
+		&self.repo
 	}
 
-	fn commit(&self) -> GitHubCommit {
-		GitHubCommit(self.inner.clone())
+	fn commit(&self) -> &GitHubCommit {
+		&self.commit
 	}
 
-	fn issue(&self) -> GitHubIssue {
-		GitHubIssue(self.inner.clone())
+	fn issue(&self) -> &GitHubIssue {
+		&self.issue
 	}
 
-	fn release(&self) -> GitHubRelease {
-		GitHubRelease(self.inner.clone())
+	fn release(&self) -> &GitHubRelease {
+		&self.release
 	}
 }

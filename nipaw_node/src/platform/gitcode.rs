@@ -10,10 +10,10 @@ use crate::{
 		org::OrgInfo,
 		release::ReleaseInfo,
 		repo::{CollaboratorPermission, CollaboratorResult, RepoInfo, RepoPath},
-		user::{ContributionResult, UserInfo},
+		user::{ContributionCalendar, UserInfo},
 	},
 };
-use napi::tokio::sync::{RwLock, RwLockWriteGuard};
+use napi::tokio::sync::{RwLock, RwLockReadGuard};
 use napi_derive::napi;
 use nipaw_core::{Commit, Issue, Org, Provider, Proxy, Release, Repo, Token, User};
 use paste::paste;

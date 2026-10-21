@@ -1,36 +1,48 @@
-use crate::GitHubClientInner;
+use crate::{Error, GitHubState, Json, Result};
 use async_trait::async_trait;
-use crate::common::JsonValue;
-use nipaw_core::option::release::UpdateOption;
-use nipaw_core::types::release::ReleaseInfo;
-use nipaw_core::types::repo::RepoPath;
-use nipaw_core::{Error, Release, Result};
+use nipaw_core::Release;
+use nipaw_core::release::{AssetsInfo, AuthorInfo, ReleaseInfo, ReleaseUpdateOption};
+use nipaw_core::repo::RepoPath;
 use std::sync::Arc;
 
-pub struct GitHubRelease(pub(crate) Arc<GitHubClientInner>);
+type State = Arc<GitHubState>;
+
+#[derive(Debug, Clone)]
+pub struct GitHubRelease(State);
 
 impl GitHubRelease {
-	pub(crate) async fn get_release_id(
-		&self,
-		repo_path: &RepoPath,
-		tag_name: &str,
-	) -> Result<u64> {
-		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
+	pub(crate) fn new(state: impl Into<State>) -> Self {
+		Self(state.into())
+	}
+}
+
+impl GitHubRelease {
+	pub(crate) async fn get_release_id(&self, repo_path: &RepoPath, tag_name: &str) -> Result<u64> {
+		let config = self.0.config();
+		let (token, api_url) = (&config.token, &config.api_url);
 		if token.is_none() {
 			return Err(Error::TokenEmpty);
 		}
-		let url =
-			format!("{}/repos/{}/{}/releases/tags/{}", api_url, repo_path.owner, repo_path.repo, tag_name);
-		let client = self.0.client.read().await;
+		let url = format!(
+			"{}/repos/{}/{}/releases/tags/{}",
+			api_url, repo_path.owner, repo_path.repo, tag_name
+		);
+		let client = self.0.http();
 		let request = client.get(url).bearer_auth(token.as_ref().unwrap());
-		let res = request.send().await?.json::<JsonValue>().await?;
-		let id = res.0.get("id").and_then(|x| x.as_u64()).ok_or(Error::NotFound{ resource: "id".to_string()})?;
+		let res = request.send().await?.json::<Json>().await?;
+		let id = res
+			.as_inner()
+			.get("id")
+			.and_then(|x| x.as_u64())
+			.ok_or(Error::NotFound { resource: "id".to_string() })?;
 		Ok(id)
 	}
 }
 
 #[async_trait]
 impl Release for GitHubRelease {
+	type Err = crate::Error;
+
 	async fn create(
 		&self,
 		repo_path: RepoPath,
@@ -39,12 +51,13 @@ impl Release for GitHubRelease {
 		body: Option<&str>,
 		target_commitish: Option<&str>,
 	) -> Result<ReleaseInfo> {
-		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
+		let config = self.0.config();
+		let (token, api_url) = (&config.token, &config.api_url);
 		if token.is_none() {
 			return Err(Error::TokenEmpty);
 		}
 		let url = format!("{}/repos/{}/{}/releases", api_url, repo_path.owner, repo_path.repo);
-		let client = self.0.client.read().await;
+		let client = self.0.http();
 		let json_body = serde_json::json!({
 			"tag_name": tag_name,
 			"name": name.unwrap_or(tag_name),
@@ -53,64 +66,146 @@ impl Release for GitHubRelease {
 		});
 
 		let request = client.post(url).bearer_auth(token.as_ref().unwrap()).json(&json_body);
-		let res = request.send().await?.json::<JsonValue>().await?;
+		let res = request.send().await?.json::<Json>().await?;
 		Ok(res.into())
 	}
 
 	async fn info(&self, repo_path: RepoPath, tag_name: Option<&str>) -> Result<ReleaseInfo> {
-		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
+		let config = self.0.config();
+		let (token, api_url) = (&config.token, &config.api_url);
 		if token.is_none() {
 			return Err(Error::TokenEmpty);
 		}
 		let url = if let Some(tag_name) = tag_name {
 			format!(
 				"{}/repos/{}/{}/releases/tags/{}",
-				api_url,
-				repo_path.owner,
-				repo_path.repo,
-				tag_name
+				api_url, repo_path.owner, repo_path.repo, tag_name
 			)
 		} else {
 			format!("{}/repos/{}/{}/releases/latest", api_url, repo_path.owner, repo_path.repo)
 		};
-		let client = self.0.client.read().await;
+		let client = self.0.http();
 		let request = client.get(url).bearer_auth(token.as_ref().unwrap());
-		let res = request.send().await?.json::<JsonValue>().await?;
+		let res = request.send().await?.json::<Json>().await?;
 		Ok(res.into())
 	}
 
 	async fn list(&self, repo_path: RepoPath) -> Result<Vec<ReleaseInfo>> {
-		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
+		let config = self.0.config();
+		let (token, api_url) = (&config.token, &config.api_url);
 		if token.is_none() {
 			return Err(Error::TokenEmpty);
 		}
 		let url = format!("{}/repos/{}/{}/releases", api_url, repo_path.owner, repo_path.repo);
-		let client = self.0.client.read().await;
+		let client = self.0.http();
 		let request = client.get(url).bearer_auth(token.as_ref().unwrap());
-		let res = request.send().await?.json::<Vec<JsonValue>>().await?;
-		Ok(res.into_iter().map(|x| x.into()).collect())
+		let res = request.send().await?.json::<Vec<Json>>().await?;
+		Ok(res.into_iter().map(Into::into).collect())
 	}
 
 	async fn update(
 		&self,
 		repo_path: RepoPath,
 		tag_name: &str,
-		option: UpdateOption,
+		option: ReleaseUpdateOption,
 	) -> Result<ReleaseInfo> {
-		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
+		let config = self.0.config();
+		let (token, api_url) = (&config.token, &config.api_url);
 		if token.is_none() {
 			return Err(Error::TokenEmpty);
 		}
 		let release_id = self.get_release_id(&repo_path, tag_name).await?;
-		let url =
-			format!("{}/repos/{}/{}/releases/{}", api_url, repo_path.owner, repo_path.repo, release_id);
-		let client = self.0.client.read().await;
+		let url = format!(
+			"{}/repos/{}/{}/releases/{}",
+			api_url, repo_path.owner, repo_path.repo, release_id
+		);
+		let client = self.0.http();
 		let request = client.patch(url).bearer_auth(token.as_ref().unwrap());
 		let json_body = serde_json::json!({
 			"name": option.name.unwrap_or(tag_name.to_string()),
 			"body": option.body.unwrap_or(tag_name.to_string())
 		});
-		let res = request.json(&json_body).send().await?.json::<JsonValue>().await?;
+		let res = request.json(&json_body).send().await?.json::<Json>().await?;
 		Ok(res.into())
+	}
+}
+
+impl From<Json<'_>> for ReleaseInfo {
+	fn from(release: Json<'_>) -> Self {
+		let release_info = release.as_inner();
+		let author_info = release_info.get("author").unwrap();
+		let assets_info = release_info.get("assets").unwrap();
+		Self {
+			tag_name: release_info
+				.get("tag_name")
+				.and_then(|tag_name| tag_name.as_str().map(|s| s.to_string()))
+				.unwrap(),
+			target_commitish: release_info
+				.get("target_commitish")
+				.and_then(|target_commitish| target_commitish.as_str().map(|s| s.to_string()))
+				.unwrap(),
+			prerelease: release_info
+				.get("prerelease")
+				.and_then(|prerelease| prerelease.as_bool())
+				.unwrap(),
+			name: release_info
+				.get("name")
+				.and_then(|name| name.as_str().map(|s| s.to_string()))
+				.unwrap(),
+			body: release_info
+				.get("body")
+				.and_then(|body| body.as_str().map(|s| s.to_string()))
+				.filter(|s| !s.is_empty()),
+			author: Json::new(author_info).into(),
+			created_at: release_info
+				.get("created_at")
+				.and_then(|created_at| created_at.as_str().map(|s| s.to_string()))
+				.unwrap()
+				.parse()
+				.unwrap(),
+			assets: Json::new(assets_info).into(),
+		}
+	}
+}
+
+impl From<Json<'_>> for AuthorInfo {
+	fn from(author: Json<'_>) -> Self {
+		let author_info = author.as_inner();
+		Self {
+			login: author_info
+				.get("login")
+				.and_then(|name| name.as_str().map(|s| s.to_string()))
+				.unwrap(),
+			avatar_url: author_info
+				.get("avatar_url")
+				.and_then(|name| name.as_str().map(|s| s.to_string()))
+				.unwrap(),
+		}
+	}
+}
+
+impl From<Json<'_>> for Vec<AssetsInfo> {
+	fn from(assets: Json<'_>) -> Self {
+		assets
+			.as_inner()
+			.as_array()
+			.map(|arr| arr.iter().map(|asset| Json::new(asset).into()).collect())
+			.unwrap_or_default()
+	}
+}
+
+impl From<Json<'_>> for AssetsInfo {
+	fn from(asset: Json<'_>) -> Self {
+		let asset_info = asset.as_inner();
+		Self {
+			name: asset_info
+				.get("name")
+				.and_then(|name| name.as_str().map(|s| s.to_string()))
+				.unwrap(),
+			url: asset_info
+				.get("browser_download_url")
+				.and_then(|name| name.as_str().map(|s| s.to_string()))
+				.unwrap(),
+		}
 	}
 }

@@ -36,3 +36,12 @@ pub struct AssetsInfo {
 	/// 资源下载地址
 	pub url: String,
 }
+
+#[derive(Debug, Deserialize, Serialize, Default)]
+pub struct ReleaseUpdateOption {
+	/// 发行名称
+	pub name: Option<String>,
+	/// 发行正文
+	pub body: Option<String>,
+}
+

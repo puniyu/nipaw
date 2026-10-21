@@ -1,28 +1,29 @@
-use crate::CnbClientInner;
+use crate::{CnbClientInner, Error, Json, Result};
 use async_trait::async_trait;
-use crate::common::JsonValue;
 use chrono::{Datelike, Local};
-use nipaw_core::option::repo::ListOptions;
-use nipaw_core::types::{
-	repo::RepoInfo,
-	user::{ContributionResult, UserInfo},
+use nipaw_core::{
+	User,
+	repo::{RepoInfo, RepoListOptions},
+	user::{Contribution, ContributionDay, UserInfo},
 };
-use nipaw_core::{Error, Result, User};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::sync::Arc;
 
+#[derive(Debug, Clone)]
 pub struct CnbUser(pub(crate) Arc<CnbClientInner>);
 
 #[async_trait]
 impl User for CnbUser {
+	type Err = Error;
+
 	async fn info(&self, user_name: Option<&str>) -> Result<UserInfo> {
-		let (token, api_url, base_url) =
-			(&self.0.config.token, &self.0.config.api_url, &self.0.config.base_url);
+		let config = self.0.config();
+		let (token, api_url, base_url) = (&config.token, &config.api_url, &config.base_url);
 		if token.is_none() {
 			return Err(Error::TokenEmpty);
 		}
-		let client = self.0.client.read().await;
+		let client = self.0.http();
 		let url = if let Some(name) = user_name {
 			format!("{}/users/{}", api_url, name)
 		} else {
@@ -33,12 +34,12 @@ impl User for CnbUser {
 			request = request.bearer_auth(token);
 		}
 		let resp = request.send().await?;
-		let mut user_info: JsonValue = resp.json().await?;
+		let mut user_info: Json = resp.json().await?;
 
-		if let Some(username) = user_info.0.get("username").and_then(|v| v.as_str()) {
+		if let Some(username) = user_info.as_inner().get("username").and_then(|v| v.as_str()) {
 			let avatar_url = format!("{}/users/{}/avatar/l", base_url, username);
 			user_info
-				.0
+				.as_inner_mut()
 				.as_object_mut()
 				.unwrap()
 				.insert("avatar_url".to_string(), Value::String(avatar_url));
@@ -47,7 +48,8 @@ impl User for CnbUser {
 	}
 
 	async fn avatar_url(&self, user_name: Option<&str>) -> Result<String> {
-		let (token, base_url) = (&self.0.config.token, &self.0.config.base_url);
+		let config = self.0.config();
+		let (token, base_url) = (&config.token, &config.base_url);
 		if token.is_none() && user_name.is_none() {
 			return Err(Error::TokenEmpty);
 		}
@@ -58,8 +60,9 @@ impl User for CnbUser {
 		Ok(info.avatar_url)
 	}
 
-	async fn contribution(&self, user_name: Option<&str>) -> Result<ContributionResult> {
-		let (token, base_url) = (&self.0.config.token, &self.0.config.base_url);
+	async fn contribution(&self, user_name: Option<&str>) -> Result<Contribution> {
+		let config = self.0.config();
+		let (token, base_url) = (&config.token, &config.base_url);
 		if token.is_none() {
 			return Err(Error::TokenEmpty);
 		}
@@ -70,18 +73,19 @@ impl User for CnbUser {
 		};
 		let year = Local::now().year();
 		let url = format!("{}/users/{}/calendar?year={}", base_url, user_name, year);
-		let client = self.0.client.read().await;
+		let client = self.0.http();
 		let resp = client.get(url).header("Accept", " application/vnd.cnb.web+json").send().await?;
-		let contribution_result: JsonValue = resp.json().await?;
+		let contribution_result: Json = resp.json().await?;
 		Ok(contribution_result.into())
 	}
 
 	async fn repo_list(
 		&self,
 		user_name: Option<&str>,
-		option: Option<ListOptions>,
+		option: Option<RepoListOptions>,
 	) -> Result<Vec<RepoInfo>> {
-		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
+		let config = self.0.config();
+		let (token, api_url) = (&config.token, &config.api_url);
 		if token.is_none() {
 			return Err(Error::TokenEmpty);
 		}
@@ -90,7 +94,7 @@ impl User for CnbUser {
 		} else {
 			format!("{}/user/repos", api_url)
 		};
-		let client = self.0.client.read().await;
+		let client = self.0.http();
 		let mut request = client.get(url);
 		let mut params: HashMap<&str, String> = HashMap::new();
 		if let Some(token) = token {
@@ -110,7 +114,47 @@ impl User for CnbUser {
 			params.insert("page", page.to_string());
 		}
 		let resp = request.query(&params).send().await?;
-		let repo_infos: Vec<JsonValue> = resp.json().await?;
-		Ok(repo_infos.into_iter().map(|v| v.into()).collect())
+		let repo_infos: Vec<Json> = resp.json().await?;
+		Ok(repo_infos.into_iter().map(Into::into).collect())
+	}
+}
+
+impl From<Json<'_>> for UserInfo {
+	fn from(json_value: Json<'_>) -> Self {
+		let user_info = json_value.as_inner();
+		let login = user_info.get("username").and_then(|v| v.as_str()).unwrap();
+		let base_url = "https://cnb.cool";
+		Self {
+			login: login.to_string(),
+			name: user_info
+				.get("nickname")
+				.and_then(|v| v.as_str())
+				.filter(|s| !s.is_empty())
+				.map(|s| s.to_string()),
+			avatar_url: format!("{}/{}", base_url, login),
+			email: user_info
+				.get("email")
+				.and_then(|v| v.as_str())
+				.filter(|s| !s.is_empty())
+				.map(|s| s.to_string()),
+			followers: user_info.get("follower_count").and_then(|v| v.as_u64()).unwrap(),
+			following: user_info.get("follow_count").and_then(|v| v.as_u64()).unwrap(),
+			public_repo_count: user_info.get("repo_count").and_then(|v| v.as_u64()).unwrap_or(0),
+		}
+	}
+}
+
+impl From<Json<'_>> for Contribution {
+	fn from(value: Json<'_>) -> Self {
+		value
+			.as_inner()
+			.as_object()
+			.unwrap()
+			.iter()
+			.map(|(date, data)| ContributionDay {
+				date: jiff::civil::Date::strptime("%Y%m%d", date).unwrap(),
+				count: data.get("score").and_then(|v| v.as_u64()).unwrap_or(0) as u32,
+			})
+			.collect()
 	}
 }

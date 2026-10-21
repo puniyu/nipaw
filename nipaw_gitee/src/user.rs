@@ -1,25 +1,28 @@
-use crate::GiteeClientInner;
+use crate::{Error, GiteeClientInner, Html, Json, Result};
 use async_trait::async_trait;
-use crate::common::{Html, JsonValue};
-use nipaw_core::option::repo::ListOptions;
-use nipaw_core::types::{
-	repo::RepoInfo,
-	user::{ContributionResult, UserInfo},
+use nipaw_core::{
+	User,
+	repo::{RepoInfo, RepoListOptions},
+	user::{Contribution, ContributionDay, UserInfo},
 };
-use nipaw_core::{Error, Result, User};
+use scraper::Selector;
 use std::collections::HashMap;
 use std::sync::Arc;
 
+#[derive(Debug, Clone)]
 pub struct GiteeUser(pub(crate) Arc<GiteeClientInner>);
 
 #[async_trait]
 impl User for GiteeUser {
+	type Err = Error;
+
 	async fn info(&self, user_name: Option<&str>) -> Result<UserInfo> {
-		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
+		let config = self.0.config();
+		let (token, api_url) = (&config.token, &config.api_url);
 		if token.is_none() && user_name.is_none() {
 			return Err(Error::TokenEmpty);
 		}
-		let client = self.0.client.read().await;
+		let client = self.0.http();
 		let url = if let Some(name) = user_name {
 			format!("{}/users/{}", api_url, name)
 		} else {
@@ -29,23 +32,24 @@ impl User for GiteeUser {
 		if let Some(token) = token {
 			request = request.query(&[("access_token", token.as_str())]);
 		}
-		let res = request.send().await?.json::<JsonValue>().await?;
+		let res = request.send().await?.json::<Json>().await?;
 		Ok(res.into())
 	}
 
 	async fn avatar_url(&self, user_name: Option<&str>) -> Result<String> {
-		let (token, base_url) = (&self.0.config.token, &self.0.config.base_url);
+		let config = self.0.config();
+		let (token, base_url) = (&config.token, &config.base_url);
 		if token.is_none() && user_name.is_none() {
 			return Err(Error::TokenEmpty);
 		}
 		if let Some(user_name) = user_name {
 			let url = format!("{}/users/{}/detail", base_url, user_name);
-			let client = self.0.client.read().await;
+			let client = self.0.http();
 			let request = client.get(url).header("Referer", base_url);
 			let resp = request.send().await?;
-			let user_info: JsonValue = resp.json().await?;
+			let user_info: Json = resp.json().await?;
 			let avatar_url = user_info
-				.0
+				.as_inner()
 				.get("data")
 				.and_then(|data| data.get("avatar_url"))
 				.and_then(|v| v.as_str())
@@ -57,8 +61,9 @@ impl User for GiteeUser {
 		Ok(info.avatar_url)
 	}
 
-	async fn contribution(&self, user_name: Option<&str>) -> Result<ContributionResult> {
-		let (token, base_url) = (&self.0.config.token, &self.0.config.base_url);
+	async fn contribution(&self, user_name: Option<&str>) -> Result<Contribution> {
+		let config = self.0.config();
+		let (token, base_url) = (&config.token, &config.base_url);
 		if token.is_none() && user_name.is_none() {
 			return Err(Error::TokenEmpty);
 		}
@@ -68,7 +73,7 @@ impl User for GiteeUser {
 			self.info(None).await?.login
 		};
 		let url = format!("{}/{}", base_url, user_name);
-		let client = self.0.client.read().await;
+		let client = self.0.http();
 		let request = client
 			.get(url)
 			.header("X-Requested-With", "XMLHttpRequest")
@@ -81,9 +86,10 @@ impl User for GiteeUser {
 	async fn repo_list(
 		&self,
 		user_name: Option<&str>,
-		option: Option<ListOptions>,
+		option: Option<RepoListOptions>,
 	) -> Result<Vec<RepoInfo>> {
-		let (token, api_url) = (&self.0.config.token, &self.0.config.api_url);
+		let config = self.0.config();
+		let (token, api_url) = (&config.token, &config.api_url);
 		if token.is_none() && user_name.is_none() {
 			return Err(Error::TokenEmpty);
 		}
@@ -92,7 +98,7 @@ impl User for GiteeUser {
 		} else {
 			format!("{}/user/repos", api_url)
 		};
-		let client = self.0.client.read().await;
+		let client = self.0.http();
 		let request = client.get(url);
 		let mut params: HashMap<&str, String> = HashMap::new();
 		if let Some(token) = token {
@@ -109,7 +115,58 @@ impl User for GiteeUser {
 			params.insert("page", page.to_string());
 		}
 		let resp = request.query(&params).send().await?;
-		let repo_infos: Vec<JsonValue> = resp.json().await?;
-		Ok(repo_infos.into_iter().map(|v| v.into()).collect())
+		let repo_infos: Vec<Json> = resp.json().await?;
+		Ok(repo_infos.into_iter().map(Into::into).collect())
+	}
+}
+
+impl From<Json<'_>> for UserInfo {
+	fn from(json_value: Json<'_>) -> Self {
+		let user_info = json_value.as_inner();
+		Self {
+			login: user_info.get("login").and_then(|v| v.as_str()).unwrap().to_string(),
+			name: user_info
+				.get("name")
+				.and_then(|v| v.as_str())
+				.filter(|s| !s.is_empty())
+				.map(|s| s.to_string()),
+			avatar_url: user_info.get("avatar_url").and_then(|v| v.as_str()).unwrap().to_string(),
+			email: user_info
+				.get("email")
+				.and_then(|v| v.as_str())
+				.filter(|s| !s.is_empty())
+				.map(|s| s.to_string()),
+			followers: user_info.get("followers").and_then(|v| v.as_u64()).unwrap(),
+			following: user_info.get("following").and_then(|v| v.as_u64()).unwrap(),
+			public_repo_count: user_info.get("public_repos").and_then(|v| v.as_u64()).unwrap(),
+		}
+	}
+}
+
+impl From<Html> for Contribution {
+	fn from(value: Html) -> Self {
+		let html = value.as_inner();
+		let document = scraper::Html::parse_document(html);
+
+		let selector = Selector::parse("div.right-side div.box").unwrap();
+
+		document
+			.select(&selector)
+			.filter_map(|element| {
+				let data_content = element.value().attr("data-content")?;
+				let date_str = element.value().attr("date")?;
+
+				let count = data_content
+					.split('个')
+					.next()?
+					.rsplit(':')
+					.next()?
+					.parse::<u32>()
+					.unwrap_or(0);
+				let date = jiff::civil::Date::strptime("%Y%m%d", date_str).ok()?;
+
+				Some(ContributionDay { date, count })
+			})
+			.collect()
 	}
 }

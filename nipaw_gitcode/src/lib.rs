@@ -1,26 +1,33 @@
 mod commit;
-mod common;
+#[doc(inline)]
+pub use commit::GitCodeCommit;
+mod error;
+#[doc(inline)]
+pub use error::{Error, Result};
 mod issue;
+#[doc(inline)]
+pub use issue::GitCodeIssue;
+mod json;
+pub(crate) use json::Json;
 mod middleware;
 mod org;
+#[doc(inline)]
+pub use org::GitCodeOrg;
 mod release;
+#[doc(inline)]
+pub use release::GitCodeRelease;
 mod repo;
+#[doc(inline)]
+pub use repo::GitCodeRepo;
+mod time;
+pub(crate) use time::format_datetime;
 mod user;
+#[doc(inline)]
+pub use user::GitCodeUser;
 
-use crate::{
-	commit::GitCodeCommit,
-	common::JsonValue,
-	issue::GitCodeIssue,
-	middleware::{HeaderMiddleware, ResponseMiddleware},
-	org::GitCodeOrg,
-	release::GitCodeRelease,
-	repo::GitCodeRepo,
-	user::GitCodeUser,
-};
-pub use nipaw_core::{Client, Commit, Config, Error, Issue, Org, Provider, Release, Repo, Result, Token, User};
+pub use nipaw_core::{Commit, Issue, Org, Provider, Release, Repo, User};
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
-use std::sync::Arc;
-use tokio::sync::RwLock;
+use std::sync::{Arc, RwLock};
 
 #[derive(Debug, Clone)]
 pub(crate) struct GitCodeConfig {
@@ -30,10 +37,22 @@ pub(crate) struct GitCodeConfig {
 	pub(crate) web_api_url: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub(crate) struct GitCodeClientInner {
-	pub(crate) config: GitCodeConfig,
-	pub(crate) client: Arc<RwLock<Arc<ClientWithMiddleware>>>,
+	pub(crate) config: RwLock<Arc<GitCodeConfig>>,
+	pub(crate) client: RwLock<Arc<ClientWithMiddleware>>,
+}
+
+impl GitCodeClientInner {
+	/// 取出配置快照
+	pub(crate) fn config(&self) -> Arc<GitCodeConfig> {
+		Arc::clone(&self.config.read().unwrap())
+	}
+
+	/// 取出 http 客户端快照
+	pub(crate) fn http(&self) -> Arc<ClientWithMiddleware> {
+		Arc::clone(&self.client.read().unwrap())
+	}
 }
 
 impl Default for GitCodeConfig {
@@ -57,21 +76,33 @@ impl GitCodeConfig {
 #[derive(Debug, Clone)]
 pub struct GitCodeClient {
 	pub(crate) inner: Arc<GitCodeClientInner>,
+	user: GitCodeUser,
+	org: GitCodeOrg,
+	repo: GitCodeRepo,
+	commit: GitCodeCommit,
+	issue: GitCodeIssue,
+	release: GitCodeRelease,
 }
 
 impl Default for GitCodeClient {
 	fn default() -> Self {
-		let client = reqwest::Client::new();
+		let inner = Arc::new(GitCodeClientInner {
+			config: RwLock::new(Arc::new(GitCodeConfig::default())),
+			client: RwLock::new(Arc::new(
+				ClientBuilder::new(reqwest::Client::new())
+					.with(middleware::HeaderMiddleware)
+					.with(middleware::ResponseMiddleware)
+					.build(),
+			)),
+		});
 		Self {
-			inner: Arc::new(GitCodeClientInner {
-				config: GitCodeConfig::default(),
-				client: Arc::new(RwLock::new(Arc::new(
-					ClientBuilder::new(client)
-						.with(HeaderMiddleware)
-						.with(ResponseMiddleware)
-						.build(),
-				))),
-			}),
+			user: GitCodeUser(Arc::clone(&inner)),
+			org: GitCodeOrg(Arc::clone(&inner)),
+			repo: GitCodeRepo(Arc::clone(&inner)),
+			commit: GitCodeCommit(Arc::clone(&inner)),
+			issue: GitCodeIssue(Arc::clone(&inner)),
+			release: GitCodeRelease(Arc::clone(&inner)),
+			inner,
 		}
 	}
 }
@@ -80,29 +111,33 @@ impl GitCodeClient {
 	pub fn new() -> Self {
 		Self::default()
 	}
-}
 
-impl Token for GitCodeClient {
-	fn set_token(&mut self, token: &str) -> Result<()> {
+	/// 设置访问令牌
+	pub fn set_token(&self, token: &str) -> Result<()> {
 		if token.is_empty() {
 			return Err(Error::TokenEmpty);
 		}
-		Arc::make_mut(&mut self.inner).config.set_token(token);
+		let mut guard = self.inner.config.write().unwrap();
+		Arc::make_mut(&mut *guard).set_token(token);
 		Ok(())
 	}
-}
 
-impl nipaw_core::Proxy for GitCodeClient {
-	fn set_proxy(&mut self, proxy: &str) -> Result<()> {
+	/// 设置代理
+	pub fn set_proxy(&self, proxy: &str) -> Result<()> {
 		let client = reqwest::Client::builder().proxy(reqwest::Proxy::all(proxy)?).build()?;
-		*self.inner.client.try_write().unwrap() = Arc::new(
-			ClientBuilder::new(client).with(HeaderMiddleware).with(ResponseMiddleware).build(),
+		let client = Arc::new(
+			ClientBuilder::new(client)
+				.with(middleware::HeaderMiddleware)
+				.with(middleware::ResponseMiddleware)
+				.build(),
 		);
+		*self.inner.client.write().unwrap() = client;
 		Ok(())
 	}
 }
 
 impl Provider for GitCodeClient {
+	type Err = Error;
 	type User = GitCodeUser;
 	type Org = GitCodeOrg;
 	type Repo = GitCodeRepo;
@@ -110,28 +145,28 @@ impl Provider for GitCodeClient {
 	type Issue = GitCodeIssue;
 	type Release = GitCodeRelease;
 
-	fn user(&self) -> GitCodeUser {
-		GitCodeUser(self.inner.clone())
+	fn user(&self) -> &GitCodeUser {
+		&self.user
 	}
 
-	fn org(&self) -> GitCodeOrg {
-		GitCodeOrg(self.inner.clone())
+	fn org(&self) -> &GitCodeOrg {
+		&self.org
 	}
 
-	fn repo(&self) -> GitCodeRepo {
-		GitCodeRepo(self.inner.clone())
+	fn repo(&self) -> &GitCodeRepo {
+		&self.repo
 	}
 
-	fn commit(&self) -> GitCodeCommit {
-		GitCodeCommit(self.inner.clone())
+	fn commit(&self) -> &GitCodeCommit {
+		&self.commit
 	}
 
-	fn issue(&self) -> GitCodeIssue {
-		GitCodeIssue(self.inner.clone())
+	fn issue(&self) -> &GitCodeIssue {
+		&self.issue
 	}
 
-	fn release(&self) -> GitCodeRelease {
-		GitCodeRelease(self.inner.clone())
+	fn release(&self) -> &GitCodeRelease {
+		&self.release
 	}
 }
 
@@ -147,7 +182,8 @@ pub(crate) async fn get_user_repo_count(
 	);
 	let request = client.get(url).header("Referer", base_url);
 	let resp = request.send().await?;
-	let repo_info: JsonValue = resp.json().await?;
-	let repo_count = repo_info.0.get("total").and_then(|total| total.as_u64()).unwrap_or(0);
+	let repo_info: Json = resp.json().await?;
+	let repo_count =
+		repo_info.as_inner().get("total").and_then(|total| total.as_u64()).unwrap_or(0);
 	Ok(repo_count)
 }

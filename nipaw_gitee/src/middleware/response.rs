@@ -1,8 +1,8 @@
+use crate::Error;
 use async_trait::async_trait;
 use http::Extensions;
-use nipaw_core::Error as CoreError;
 use reqwest::{Request, Response, StatusCode};
-use reqwest_middleware::{Error, Middleware, Next, Result};
+use reqwest_middleware::{Middleware, Next, Result};
 use serde::Deserialize;
 
 pub struct ResponseMiddleware;
@@ -24,7 +24,9 @@ impl Middleware for ResponseMiddleware {
 		let res = next.run(req, extensions).await?;
 		match res.status() {
 			StatusCode::OK => Ok(res),
-			StatusCode::UNAUTHORIZED => Err(Error::Middleware(CoreError::Unauthorized.into())),
+			StatusCode::UNAUTHORIZED => {
+				Err(reqwest_middleware::Error::Middleware(Error::Unauthorized.into()))
+			}
 			StatusCode::NOT_FOUND => {
 				let path = res.url().path();
 				let resource_type = path
@@ -46,13 +48,17 @@ impl Middleware for ResponseMiddleware {
 					})
 					.unwrap_or("Resource")
 					.to_string();
-				Err(Error::Middleware(CoreError::NotFound { resource: resource_type }.into()))
+				Err(reqwest_middleware::Error::Middleware(
+					Error::NotFound { resource: resource_type }.into(),
+				))
 			}
 			StatusCode::FORBIDDEN => {
 				let message = res.json::<ErrorResponse>().await?.message;
-				Err(Error::Middleware(CoreError::Forbidden { message }.into()))
+				Err(reqwest_middleware::Error::Middleware(Error::Forbidden { message }.into()))
 			}
-			StatusCode::TOO_MANY_REQUESTS => Err(Error::Middleware(CoreError::RateLimit.into())),
+			StatusCode::TOO_MANY_REQUESTS => {
+				Err(reqwest_middleware::Error::Middleware(Error::RateLimit.into()))
+			}
 			_ => Ok(res),
 		}
 	}

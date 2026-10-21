@@ -1,28 +1,35 @@
 mod commit;
-mod common;
+#[doc(inline)]
+pub use commit::CnbCommit;
+mod error;
+#[doc(inline)]
+pub use error::{Error, Result};
 mod issue;
+#[doc(inline)]
+pub use issue::CnbIssue;
+mod json;
+pub(crate) use json::Json;
 mod middleware;
 mod org;
+#[doc(inline)]
+pub use org::CnbOrg;
 mod release;
+#[doc(inline)]
+pub use release::CnbRelease;
 mod repo;
+#[doc(inline)]
+pub use repo::CnbRepo;
+mod time;
+pub(crate) use time::format_datetime;
 mod user;
+#[doc(inline)]
+pub use user::CnbUser;
 
-use crate::{
-	commit::CnbCommit,
-	common::JsonValue,
-	issue::CnbIssue,
-	middleware::{HeaderMiddleware, ResponseMiddleware},
-	org::CnbOrg,
-	release::CnbRelease,
-	repo::CnbRepo,
-	user::CnbUser,
-};
-use nipaw_core::types::user::UserInfo;
-pub use nipaw_core::{Client, Commit, Config, Error, Issue, Org, Provider, Release, Repo, Result, Token, User};
+use nipaw_core::user::UserInfo;
+pub use nipaw_core::{Commit, Issue, Org, Provider, Release, Repo, User};
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use serde_json::Value;
-use std::sync::Arc;
-use tokio::sync::RwLock;
+use std::sync::{Arc, RwLock};
 
 #[derive(Debug, Clone)]
 pub(crate) struct CnbConfig {
@@ -31,10 +38,22 @@ pub(crate) struct CnbConfig {
 	pub(crate) base_url: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub(crate) struct CnbClientInner {
-	pub(crate) config: CnbConfig,
-	pub(crate) client: Arc<RwLock<Arc<ClientWithMiddleware>>>,
+	pub(crate) config: RwLock<Arc<CnbConfig>>,
+	pub(crate) client: RwLock<Arc<ClientWithMiddleware>>,
+}
+
+impl CnbClientInner {
+	/// 取出配置快照
+	pub(crate) fn config(&self) -> Arc<CnbConfig> {
+		Arc::clone(&self.config.read().unwrap())
+	}
+
+	/// 取出 http 客户端快照
+	pub(crate) fn http(&self) -> Arc<ClientWithMiddleware> {
+		Arc::clone(&self.client.read().unwrap())
+	}
 }
 
 impl Default for CnbConfig {
@@ -57,21 +76,33 @@ impl CnbConfig {
 #[derive(Debug, Clone)]
 pub struct CnbClient {
 	pub(crate) inner: Arc<CnbClientInner>,
+	user: CnbUser,
+	org: CnbOrg,
+	repo: CnbRepo,
+	commit: CnbCommit,
+	issue: CnbIssue,
+	release: CnbRelease,
 }
 
 impl Default for CnbClient {
 	fn default() -> Self {
-		let client = reqwest::Client::new();
+		let inner = Arc::new(CnbClientInner {
+			config: RwLock::new(Arc::new(CnbConfig::default())),
+			client: RwLock::new(Arc::new(
+				ClientBuilder::new(reqwest::Client::new())
+					.with(middleware::HeaderMiddleware)
+					.with(middleware::ResponseMiddleware)
+					.build(),
+			)),
+		});
 		Self {
-			inner: Arc::new(CnbClientInner {
-				config: CnbConfig::default(),
-				client: Arc::new(RwLock::new(Arc::new(
-					ClientBuilder::new(client)
-						.with(HeaderMiddleware)
-						.with(ResponseMiddleware)
-						.build(),
-				))),
-			}),
+			user: CnbUser(Arc::clone(&inner)),
+			org: CnbOrg(Arc::clone(&inner)),
+			repo: CnbRepo(Arc::clone(&inner)),
+			commit: CnbCommit(Arc::clone(&inner)),
+			issue: CnbIssue(Arc::clone(&inner)),
+			release: CnbRelease(Arc::clone(&inner)),
+			inner,
 		}
 	}
 }
@@ -80,29 +111,33 @@ impl CnbClient {
 	pub fn new() -> Self {
 		Self::default()
 	}
-}
 
-impl Token for CnbClient {
-	fn set_token(&mut self, token: &str) -> Result<()> {
+	/// 设置访问令牌
+	pub fn set_token(&self, token: &str) -> Result<()> {
 		if token.is_empty() {
 			return Err(Error::TokenEmpty);
 		}
-		Arc::make_mut(&mut self.inner).config.set_token(token);
+		let mut guard = self.inner.config.write().unwrap();
+		Arc::make_mut(&mut *guard).set_token(token);
 		Ok(())
 	}
-}
 
-impl nipaw_core::Proxy for CnbClient {
-	fn set_proxy(&mut self, proxy: &str) -> Result<()> {
+	/// 设置代理
+	pub fn set_proxy(&self, proxy: &str) -> Result<()> {
 		let client = reqwest::Client::builder().proxy(reqwest::Proxy::all(proxy)?).build()?;
-		*self.inner.client.try_write().unwrap() = Arc::new(
-			ClientBuilder::new(client).with(HeaderMiddleware).with(ResponseMiddleware).build(),
+		let client = Arc::new(
+			ClientBuilder::new(client)
+				.with(middleware::HeaderMiddleware)
+				.with(middleware::ResponseMiddleware)
+				.build(),
 		);
+		*self.inner.client.write().unwrap() = client;
 		Ok(())
 	}
 }
 
 impl Provider for CnbClient {
+	type Err = Error;
 	type User = CnbUser;
 	type Org = CnbOrg;
 	type Repo = CnbRepo;
@@ -110,39 +145,39 @@ impl Provider for CnbClient {
 	type Issue = CnbIssue;
 	type Release = CnbRelease;
 
-	fn user(&self) -> CnbUser {
-		CnbUser(self.inner.clone())
+	fn user(&self) -> &CnbUser {
+		&self.user
 	}
 
-	fn org(&self) -> CnbOrg {
-		CnbOrg(self.inner.clone())
+	fn org(&self) -> &CnbOrg {
+		&self.org
 	}
 
-	fn repo(&self) -> CnbRepo {
-		CnbRepo(self.inner.clone())
+	fn repo(&self) -> &CnbRepo {
+		&self.repo
 	}
 
-	fn commit(&self) -> CnbCommit {
-		CnbCommit(self.inner.clone())
+	fn commit(&self) -> &CnbCommit {
+		&self.commit
 	}
 
-	fn issue(&self) -> CnbIssue {
-		CnbIssue(self.inner.clone())
+	fn issue(&self) -> &CnbIssue {
+		&self.issue
 	}
 
-	fn release(&self) -> CnbRelease {
-		CnbRelease(self.inner.clone())
+	fn release(&self) -> &CnbRelease {
+		&self.release
 	}
 }
 
 pub(crate) async fn get_repo_default_branch(
 	client: Arc<ClientWithMiddleware>,
 	config: &CnbConfig,
-	repo_info: &JsonValue,
+	repo_info: &Json<'_>,
 	token: Option<String>,
 ) -> Result<String> {
 	let is_public = repo_info
-		.0
+		.as_inner()
 		.get("visibility_level")
 		.and_then(|v| v.as_str())
 		.map(|s| s.to_lowercase() == "public")
@@ -150,13 +185,13 @@ pub(crate) async fn get_repo_default_branch(
 
 	let (owner, repo) = (
 		repo_info
-			.0
+			.as_inner()
 			.get("owner")
 			.and_then(|v| v.get("login"))
 			.and_then(|v| v.as_str())
 			.unwrap()
 			.to_string(),
-		repo_info.0.get("name").and_then(|v| v.as_str()).unwrap().to_string(),
+		repo_info.as_inner().get("name").and_then(|v| v.as_str()).unwrap().to_string(),
 	);
 	if is_public {
 		let url = format!(
@@ -179,8 +214,8 @@ pub(crate) async fn get_repo_default_branch(
 			request = request.bearer_auth(token);
 		}
 		let resp = request.send().await?;
-		let repo_info: JsonValue = resp.json().await?;
-		Ok(repo_info.0.get("name").and_then(|v| v.as_str()).unwrap().to_string())
+		let repo_info: Json = resp.json().await?;
+		Ok(repo_info.as_inner().get("name").and_then(|v| v.as_str()).unwrap().to_string())
 	}
 }
 
@@ -191,6 +226,6 @@ pub(crate) async fn get_user_info(
 ) -> Result<UserInfo> {
 	let url = format!("{}/users/{}", config.base_url, user_name);
 	let request = client.get(url);
-	let resp = request.send().await?.json::<JsonValue>().await?;
+	let resp = request.send().await?.json::<Json>().await?;
 	Ok(resp.into())
 }

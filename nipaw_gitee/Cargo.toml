@@ -20,6 +20,8 @@ itertools.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 chrono.workspace = true
+thiserror.workspace = true
+jiff.workspace = true
 
 nipaw_core = { path = "../nipaw_core", version = "1.9.7" }
 

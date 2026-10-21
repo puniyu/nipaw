@@ -10,10 +10,10 @@ use crate::{
 		org::OrgInfo,
 		release::ReleaseInfo,
 		repo::{CollaboratorPermission, CollaboratorResult, RepoInfo, RepoPath},
-		user::{ContributionResult, UserInfo},
+		user::{ContributionCalendar, UserInfo},
 	},
 };
-use napi::tokio::sync::{RwLock, RwLockWriteGuard};
+use napi::tokio::sync::{RwLock, RwLockReadGuard};
 use napi_derive::napi;
 use nipaw_core::{Commit, Issue, Org, Provider, Proxy, Release, Repo, Token, User};
 use paste::paste;
@@ -37,7 +37,7 @@ impl GithubClient {
 	/// ## 参数
 	/// - `url` - 反向代理地址, 反代地址需要同时支持`github.com`和`api.github.com`
 	pub async fn set_reverse_proxy(&self, url: String) {
-		let mut client = create_client_github().await;
+		let client = create_client_github().await;
 		client.set_reverse_proxy(url.as_str())
 	}
 }
