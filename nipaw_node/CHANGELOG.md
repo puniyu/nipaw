@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.9.8](https://github.com/puniyu/nipaw/compare/node-v1.9.7...node-v1.9.8) (2026-11-28)
+
+
+### 🔧 其他更新
+
+* **deps:** update dependency @napi-rs/cli to v3.10.10 ([#319](https://github.com/puniyu/nipaw/issues/319)) ([d109348](https://github.com/puniyu/nipaw/commit/d1093484cfd29e8c636a9939820f6e4fd358da23))
+* **deps:** update dependency @napi-rs/cli to v3.10.12 ([#320](https://github.com/puniyu/nipaw/issues/320)) ([ccf958e](https://github.com/puniyu/nipaw/commit/ccf958e45619012147cb24efa83267d473352832))
+* **deps:** update dependency @napi-rs/cli to v3.10.3 ([#288](https://github.com/puniyu/nipaw/issues/288)) ([76728c3](https://github.com/puniyu/nipaw/commit/76728c3565cb38300ab5602ac82c183419e93ad1))
+* **deps:** update dependency @napi-rs/cli to v3.10.4 ([#289](https://github.com/puniyu/nipaw/issues/289)) ([60d19f0](https://github.com/puniyu/nipaw/commit/60d19f0a5885f024cf0c9391ebe77b594436c63a))
+* **deps:** update dependency @napi-rs/cli to v3.10.5 ([#295](https://github.com/puniyu/nipaw/issues/295)) ([25c5ac7](https://github.com/puniyu/nipaw/commit/25c5ac702c6d18a016707bdf26f5fd2f2226d2dd))
+* **deps:** update dependency @napi-rs/cli to v3.10.8 ([#300](https://github.com/puniyu/nipaw/issues/300)) ([c525387](https://github.com/puniyu/nipaw/commit/c525387a4c7c60e2d2d795c8fac585d7eb52ebcf))
+* **deps:** update dependency @napi-rs/cli to v3.10.9 ([#311](https://github.com/puniyu/nipaw/issues/311)) ([3758138](https://github.com/puniyu/nipaw/commit/37581384b857c76b9e3245017eab7b72ac85b5e1))
+* **deps:** update dependency @napi-rs/cli to v3.11.0 ([#335](https://github.com/puniyu/nipaw/issues/335)) ([eca5a8c](https://github.com/puniyu/nipaw/commit/eca5a8c380b1e687912120ea352dcf65f691b4aa))
+* **deps:** update dependency @napi-rs/cli to v3.11.1 ([#336](https://github.com/puniyu/nipaw/issues/336)) ([9960a4f](https://github.com/puniyu/nipaw/commit/9960a4f54b1b6f5c8aa9966ad85626f6bc424051))
+
 ## [1.9.7](https://github.com/puniyu/nipaw/compare/node-v1.9.6...node-v1.9.7) (2026-07-01)
 
 
